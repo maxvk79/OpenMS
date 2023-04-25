@@ -276,6 +276,22 @@ namespace OpenMS
     }
     endProgress();
     
+    Size numFeatures = 0;
+    float max_width = 0;
+    double avg_fwhm = 0;
+    for (size_t featureMap = 0; featureMap < input_maps.size(); featureMap++)
+    {
+      for (size_t feature = 0; feature < input_maps[featureMap].size(); feature++)
+      {
+        float tmp_width = input_maps[featureMap][feature].getWidth();
+        avg_fwhm += tmp_width;
+        if(max_width < tmp_width){max_width = tmp_width;}
+        ++numFeatures;
+      }
+    }
+    avg_fwhm /= double(numFeatures);
+    cout << "Number of Features in the input maps: " << numFeatures << "\n Max FWHM: " << max_width << " RT\n" << "Average FWHM: " << avg_fwhm << " RT\n";
+    
     postprocess_(input_maps, out);
   }
 
