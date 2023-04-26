@@ -208,14 +208,54 @@ protected:
         {
           FeatureMap tmp;
           f.load(ins[i], tmp);
+
+          StringList ms_runs;
+          tmp.getPrimaryMSRunPath(ms_runs);
+
+          // associate mzML file with map i in consensusXML
+          if (ms_runs.size() > 1 || ms_runs.empty())
+          {
+            OPENMS_LOG_WARN << "Exactly one MS run should be associated with a FeatureMap. "
+              << ms_runs.size() 
+              << " provided." << endl;
+          }
+          else
+          {
+            out_map.getColumnHeaders()[i].filename = ms_runs.front();
+          }
+          out_map.getColumnHeaders()[i].size = tmp.size();
+          out_map.getColumnHeaders()[i].unique_id = tmp.getUniqueId();
+
+          // copy over information on the primary MS run
+          ms_run_locations.insert(ms_run_locations.end(), ms_runs.begin(), ms_runs.end());
+
           for (Feature& ft : tmp)
           {
+            String adduct;
+            String group;
+            //exception: addduct information
+            if (ft.metaValueExists(Constants::UserParam::DC_CHARGE_ADDUCTS))
+            {
+              adduct = ft.getMetaValue(Constants::UserParam::DC_CHARGE_ADDUCTS);
+            }
+            if (ft.metaValueExists(Constants::UserParam::ADDUCT_GROUP))
+            {
+              group = ft.getMetaValue(Constants::UserParam::ADDUCT_GROUP);
+            }
             ft.getSubordinates().clear();
             ft.getConvexHulls().clear();
+            if (!adduct.empty())
+            {
+              ft.setMetaValue(Constants::UserParam::DC_CHARGE_ADDUCTS, adduct);
+            }
+            if (!group.empty())
+            {
+              ft.setMetaValue("Group", group);
+            }
             massrange.push_back(ft.getMZ());
           }
-          maps[i] = tmp;
-          maps[i].updateRanges();
+          //maps[i] = tmp;
+          //maps[i].updateRanges();
         }
         stable_sort(massrange.begin(), massrange.end());
         cout << "minMZ: " << massrange.front() << "\n maxMZ: " << massrange.back() << "\n";
@@ -234,6 +274,31 @@ protected:
         partition_boundarys.push_back(massrange.back());
         cout << "partition " << partition_boundarys.size() << ": " << partition_boundarys.back() << endl;
         
+        maps.clear();
+
+        for (Size i = 0; i < numOfPartitions; ++i)
+        {
+          vector<FeatureMap> maps(ins.size());
+          DRange<1> mzrange(partition_boundarys[i],partition_boundarys[i+1]);
+          param.setMZRange(mzrange);
+          cout << "MZ Range used: " << param.getMZRange() << endl;
+          f.setOptions(param);
+          
+          for (Size j = 0; j < ins.size(); ++j)
+          {
+            FeatureMap tmp;
+            f.load(ins[j], tmp);
+            for(Feature& ft : tmp)
+            {
+              ft.getSubordinates().clear();
+              ft.getConvexHulls().clear();
+            }
+            maps[j] = tmp;
+            maps[j].updateRanges();
+
+            algorithm->group(maps, out_map);
+          }
+        }
       }
       else
       {
