@@ -278,6 +278,7 @@ protected:
 
         for (Size i = 0; i < numOfPartitions; ++i)
         {
+          //ConsensusMap tmp_out_map;
           vector<FeatureMap> maps(ins.size());
           DRange<1> mzrange(partition_boundarys[i],partition_boundarys[i+1]);
           param.setMZRange(mzrange);
@@ -295,9 +296,9 @@ protected:
             }
             maps[j] = tmp;
             maps[j].updateRanges();
-
-            algorithm->group(maps, out_map);
           }
+          algorithm->group(maps, tmp_out_map);
+          //out_map += tmp_out_map;
         }
       }
       else
