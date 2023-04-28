@@ -194,7 +194,7 @@ protected:
         //-------------------------------------------------------------
         // Preprocessing: compute partitions
         //-------------------------------------------------------------
-        vector<FeatureMap> maps(ins.size());
+        //vector<FeatureMap> maps(ins.size());
         FeatureXMLFile f;
         FeatureFileOptions param = f.getOptions();
 
@@ -260,7 +260,7 @@ protected:
         stable_sort(massrange.begin(), massrange.end());
         cout << "minMZ: " << massrange.front() << "\n maxMZ: " << massrange.back() << "\n";
 
-        Size numOfPartitions = 5;
+        Size numOfPartitions = 2;
         Size partitionSize = massrange.size() / numOfPartitions;
         cout << "partition size: " << partitionSize << endl;
         Size partitionIndex = 0;
@@ -274,11 +274,10 @@ protected:
         partition_boundarys.push_back(massrange.back());
         cout << "partition " << partition_boundarys.size() << ": " << partition_boundarys.back() << endl;
         
-        maps.clear();
+        //maps.clear();
 
         for (Size i = 0; i < numOfPartitions; ++i)
         {
-          //ConsensusMap tmp_out_map;
           vector<FeatureMap> maps(ins.size());
           DRange<1> mzrange(partition_boundarys[i],partition_boundarys[i+1]);
           param.setMZRange(mzrange);
@@ -297,8 +296,8 @@ protected:
             maps[j] = tmp;
             maps[j].updateRanges();
           }
-          algorithm->group(maps, tmp_out_map);
-          //out_map += tmp_out_map;
+          algorithm->group(maps, out_map);
+          maps.clear();
         }
       }
       else

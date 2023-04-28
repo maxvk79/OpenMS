@@ -127,7 +127,7 @@ namespace OpenMS
                                        "At least two maps must be given!");
     }
 
-    out.clear(false);
+    //out.clear(false);
 
     // collect all m/z values for partitioning, find intensity maximum
     vector<double> massrange;
