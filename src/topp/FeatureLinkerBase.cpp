@@ -203,6 +203,7 @@ protected:
 
         f.setOptions(param);
         
+        
         vector<double> massrange;
         for(Size i = 0; i < ins.size(); ++i)
         {
@@ -244,6 +245,7 @@ protected:
             }
             ft.getSubordinates().clear();
             ft.getConvexHulls().clear();
+            ft.clearMetaInfo();
             if (!adduct.empty())
             {
               ft.setMetaValue(Constants::UserParam::DC_CHARGE_ADDUCTS, adduct);
@@ -258,11 +260,23 @@ protected:
           //maps[i].updateRanges();
         }
         stable_sort(massrange.begin(), massrange.end());
-        cout << "minMZ: " << massrange.front() << "\n maxMZ: " << massrange.back() << "\n";
 
         Size numOfPartitions = 2;
         Size partitionSize = massrange.size() / numOfPartitions;
+        double max_mz_tol = 10.0;
+        vector<double> partition_boundaries = {massrange.front(),massrange.back()};
+
+        //partition_boundaries.push_back(massrange.front());
+        for (Size i = 0; i < numOfPartitions; ++i)
+        {
+          
+        }
+        //partition_boundaries.push_back(massrange.back());
+
+        cout << "minMZ: " << massrange.front() << "\n maxMZ: " << massrange.back() << "\n";
+        
         cout << "partition size: " << partitionSize << endl;
+        /*
         Size partitionIndex = 0;
         vector<double> partition_boundarys;
         for(Size pt = 0; pt < numOfPartitions; ++pt)
@@ -273,13 +287,13 @@ protected:
         }
         partition_boundarys.push_back(massrange.back());
         cout << "partition " << partition_boundarys.size() << ": " << partition_boundarys.back() << endl;
-        
-        //maps.clear();
+        */
+
 
         for (Size i = 0; i < numOfPartitions; ++i)
         {
           vector<FeatureMap> maps(ins.size());
-          DRange<1> mzrange(partition_boundarys[i],partition_boundarys[i+1]);
+          DRange<1> mzrange(partition_boundaries.front(),partition_boundaries.back());
           param.setMZRange(mzrange);
           cout << "MZ Range used: " << param.getMZRange() << endl;
           f.setOptions(param);
@@ -317,9 +331,7 @@ protected:
         // to save memory don't load convex hulls and subordinates
         param.setLoadSubordinates(false);
         param.setLoadConvexHull(false);
-        //DRange<1> mzrangetry(0,500);
-        //param.setMZRange(mzrangetry);
-        //cout << "MZ Range used: " << param.getMZRange() << endl;
+
         f.setOptions(param);
 
         Size progress = 0;
@@ -366,7 +378,7 @@ protected:
             }
             ft.getSubordinates().clear();
             ft.getConvexHulls().clear();
-            //ft.clearMetaInfo();
+            ft.clearMetaInfo();
             if (!adduct.empty())
             {
               ft.setMetaValue(Constants::UserParam::DC_CHARGE_ADDUCTS, adduct);

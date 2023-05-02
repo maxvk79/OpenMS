@@ -272,6 +272,8 @@ namespace OpenMS
 
       // link features
       runClustering_(kd_data, out);
+      //-----------TRY-----------
+      //out.subtract(input_maps);
       setProgress(progress++);
     }
     endProgress();
