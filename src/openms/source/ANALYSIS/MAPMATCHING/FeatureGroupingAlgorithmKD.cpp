@@ -237,8 +237,23 @@ namespace OpenMS
     }
 
     // ------------ run alignment + feature linking on individual partitions ------------
+
+   
+  //  bool overlap_cut;   // otherwise hard cut
+  //  partitions_boundaries als Tuple  
+  //  anzahl der Partitionen user_param oder so viel es geht?
+  // äußere schleife für alle hard_cuts
+  // -> nochmal in die Berechnung der Partitionen rein gehen 
+
+  // danach erstmal alles wie gehabt 
+
+  // beim schreiben in die Consensus Map gleichheitsabfrage von Consensus Featur, damit nicht doppelt !!!!  
+  // an welcher Stelle???? 
+
     Size progress = 0;
     startProgress(0, partition_boundaries.size(), "linking features");
+
+    
     for (size_t j = 0; j < partition_boundaries.size()-1; j++)
     {
       double partition_start = partition_boundaries[j];
@@ -252,8 +267,8 @@ namespace OpenMS
         // map
         for (size_t m = 0; m < input_maps[k].size(); m++)
         {
-          if (input_maps[k][m].getMZ() >= partition_start &&
-              input_maps[k][m].getMZ() < partition_end)
+          if (input_maps[k][m].getMZ() >= partition_start + 2*max_mz_tol &&  // overlap
+              input_maps[k][m].getMZ() < partition_end - 2*max_mz_tol)       // overlap 
           {
             tmp_input_maps[k].push_back(input_maps[k][m]);
           }
