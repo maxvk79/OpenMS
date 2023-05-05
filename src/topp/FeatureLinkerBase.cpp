@@ -189,7 +189,7 @@ protected:
 
 
       //---------------------------------------------------------------------------
-      if(true)
+      if(false)
       {
         //-------------------------------------------------------------
         // Preprocessing: compute partitions
@@ -390,7 +390,7 @@ protected:
 
           }
 
-          maps[i] = tmp;
+          maps[i] = std::move(tmp);
           maps[i].updateRanges();
 
           setProgress(progress++);

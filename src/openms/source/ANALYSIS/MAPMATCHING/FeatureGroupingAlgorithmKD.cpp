@@ -111,7 +111,7 @@ namespace OpenMS
   FeatureGroupingAlgorithmKD::~FeatureGroupingAlgorithmKD() = default;
 
   template <typename MapType>
-  void FeatureGroupingAlgorithmKD::group_(const vector<MapType>& input_maps,
+  void FeatureGroupingAlgorithmKD::group_(vector<MapType>& input_maps,
                                           ConsensusMap& out)
   {
     // set parameters
@@ -272,8 +272,7 @@ namespace OpenMS
 
       // link features
       runClustering_(kd_data, out);
-      //-----------TRY-----------
-      //out.subtract(input_maps);
+      
       setProgress(progress++);
     }
     endProgress();
@@ -297,13 +296,13 @@ namespace OpenMS
     postprocess_(input_maps, out);
   }
 
-  void FeatureGroupingAlgorithmKD::group(const std::vector<FeatureMap>& maps,
+  void FeatureGroupingAlgorithmKD::group(std::vector<FeatureMap>& maps,
                                          ConsensusMap& out)
   {
     group_(maps, out);
   }
 
-  void FeatureGroupingAlgorithmKD::group(const std::vector<ConsensusMap>& maps,
+  void FeatureGroupingAlgorithmKD::group(std::vector<ConsensusMap>& maps,
                                          ConsensusMap& out)
   {
     group_(maps, out);
