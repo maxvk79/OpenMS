@@ -167,7 +167,7 @@ namespace OpenMS
     double warp_mz_tol = (double)(param_.getValue("warp:mz_tol"));
     double max_mz_tol = max(mz_tol_, warp_mz_tol);
 
-    // compute partition boundaries
+    // compute partition boundaries 
     vector<double> partition_boundaries;
     vector<double> overlap_partition_boundaries;  
     partition_boundaries.push_back(massrange.front());
@@ -244,7 +244,8 @@ namespace OpenMS
   //  bool overlap_cut;   // otherwise hard cut
   //  partitions_boundaries als Tuple  
   //  anzahl der Partitionen user_param oder so viel es geht?
-  // äußere schleife für alle hard_cuts -> zwei verschiedene partition_boundaries vektoren 
+  // äußere schleife für alle hard_cuts -> zwei verschiedene partition_boundaries vektoren
+  //      -> Paralelliierung 
   // -> nochmal in die Berechnung der Partitionen rein gehen 
 
 
