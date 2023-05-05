@@ -169,6 +169,7 @@ namespace OpenMS
 
     // compute partition boundaries
     vector<double> partition_boundaries;
+    vector<double> overlap_partition_boundaries;  
     partition_boundaries.push_back(massrange.front());
     for (size_t j = 0; j < massrange.size()-1; j++)
     {
@@ -239,11 +240,13 @@ namespace OpenMS
     // ------------ run alignment + feature linking on individual partitions ------------
 
    
+  // 
   //  bool overlap_cut;   // otherwise hard cut
   //  partitions_boundaries als Tuple  
   //  anzahl der Partitionen user_param oder so viel es geht?
-  // äußere schleife für alle hard_cuts
+  // äußere schleife für alle hard_cuts -> zwei verschiedene partition_boundaries vektoren 
   // -> nochmal in die Berechnung der Partitionen rein gehen 
+
 
   // danach erstmal alles wie gehabt 
 
