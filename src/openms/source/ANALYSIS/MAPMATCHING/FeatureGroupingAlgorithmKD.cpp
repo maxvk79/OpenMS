@@ -32,7 +32,7 @@
 // $Authors: Johannes Veit $
 // --------------------------------------------------------------------------
 
-// 120
+// 110
 
 #include <OpenMS/ANALYSIS/MAPMATCHING/FeatureGroupingAlgorithmKD.h>
 #include <OpenMS/ANALYSIS/MAPMATCHING/MapAlignmentAlgorithmKD.h>
