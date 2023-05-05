@@ -160,6 +160,7 @@ namespace OpenMS
 
     // partition at boundaries -> this should be safe because there cannot be
     // any cluster reaching across boundaries
+    // Really? Don't think so?  
 
     sort(massrange.begin(), massrange.end());
     int pts_per_partition = massrange.size() / (int)(param_.getValue("nr_partitions"));
@@ -168,7 +169,37 @@ namespace OpenMS
     double max_mz_tol = max(mz_tol_, warp_mz_tol);
 
     // compute partition boundaries 
-    vector<double> partition_boundaries;
+
+
+    //  partitions_boundaries als Tuple ??? eher nict  
+    //  anzahl der Partitionen user_param oder so viel es geht?
+  
+ 
+   // compute hard partition boundaries 
+   
+  // 180
+
+
+   //zwei verschiedene partition_boundaries vektoren -> äußere schleife für alle hard_cuts -> 
+   // über alle harten Partitionen, compute inner, overlap Partitions
+   // hier kann paralleliesiert werden 
+   // disjunkte Partiotionen
+   vector<double> overlap_partition_boundaries;                 //davon gibt es einen ODER Vector von Vektoren 
+   for(int i = 0; i < hard_partition_boundaries.size(); i ++)
+   {
+
+    // compute individual massrange for the outer partition 
+
+    overlap_partition_boundaries
+
+     overlap_partition_boundaries.push_back(); 
+
+      // overlap Partitionen müssen mindestens 4* max_mz_tol groß sein 
+
+   }
+
+
+    vector<double> partition_boundaries;  // ersetzten durch hard_boundaries 
     vector<double> overlap_partition_boundaries;  
     partition_boundaries.push_back(massrange.front());
     for (size_t j = 0; j < massrange.size()-1; j++)
@@ -240,16 +271,10 @@ namespace OpenMS
     // ------------ run alignment + feature linking on individual partitions ------------
 
    
-  // 
-  //  bool overlap_cut;   // otherwise hard cut
-  //  partitions_boundaries als Tuple  
-  //  anzahl der Partitionen user_param oder so viel es geht?
-  // äußere schleife für alle hard_cuts -> zwei verschiedene partition_boundaries vektoren
-  //      -> Paralelliierung 
-  // -> nochmal in die Berechnung der Partitionen rein gehen 
+  //  alte IDEEN 
+  //        bool overlap_cut;  otherwise hard cut
 
 
-  // danach erstmal alles wie gehabt 
 
   // beim schreiben in die Consensus Map gleichheitsabfrage von Consensus Featur, damit nicht doppelt !!!!  
   // an welcher Stelle???? 
@@ -257,6 +282,7 @@ namespace OpenMS
     Size progress = 0;
     startProgress(0, partition_boundaries.size(), "linking features");
 
+    // hier erstmal alles wie gehabt 
     
     for (size_t j = 0; j < partition_boundaries.size()-1; j++)
     {
