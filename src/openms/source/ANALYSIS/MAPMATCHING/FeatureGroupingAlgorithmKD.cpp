@@ -199,7 +199,7 @@ namespace OpenMS
         double partition_start = partition_boundaries[j];
         double partition_end = partition_boundaries[j+1];
 
-        std::vector<std::vector<const BaseFeature*>> tmp_input_maps(input_maps.size());
+        std::vector<std::vector<BaseFeature*>> tmp_input_maps(input_maps.size());
         for (size_t k = 0; k < input_maps.size(); k++)
         {
           // iterate over all features in the current input map and append
@@ -218,6 +218,7 @@ namespace OpenMS
 
         // set up kd-tree
         KDTreeFeatureMaps kd_data(tmp_input_maps, param_);
+        cout << "kdtree successfully set up\n";
         aligner.addRTFitData(kd_data);
         setProgress(progress++);
       }
@@ -244,7 +245,7 @@ namespace OpenMS
       double partition_start = partition_boundaries[j];
       double partition_end = partition_boundaries[j+1];
 
-      std::vector<std::vector<const BaseFeature*>> tmp_input_maps(input_maps.size());
+      std::vector<std::vector<BaseFeature*>> tmp_input_maps(input_maps.size());
       for (size_t k = 0; k < input_maps.size(); k++)
       {
         // iterate over all features in the current input map and append pointer of
@@ -334,7 +335,7 @@ namespace OpenMS
       computeBestClusterForCenter_(i, cf_indices, assigned, kd_data);
 
       // add consensus feature
-      addConsensusFeature_(cf_indices, kd_data, out);
+      addConsensusFeatureMove_(cf_indices, kd_data, out);
 
       // mark selected sub features assigned and delete them from potential_clusters
       for (vector<Size>::const_iterator f_it = cf_indices.begin(); f_it != cf_indices.end(); ++f_it)
@@ -505,6 +506,47 @@ namespace OpenMS
     avg_distance /= cf_indices.size();
 
     return ClusterProxyKD(cf_indices.size(), avg_distance, i);
+  }
+
+  void FeatureGroupingAlgorithmKD::addConsensusFeatureMove_(const vector<Size>& indices, const KDTreeFeatureMaps& kd_data, ConsensusMap& out) const
+  {
+    ConsensusFeature cf;
+    Adduct adduct;
+    float avg_quality = 0;
+    float best_quality = 0;
+    size_t best_quality_index = 0;
+    vector<String> linked_groups;
+    for (vector<Size>::const_iterator it = indices.begin(); it != indices.end(); ++it)
+    {
+      Size i = *it;
+      cf.insert_move(kd_data.mapIndex(i), *(kd_data.feature_mutable(i)));
+      avg_quality += kd_data.feature_mutable(i)->getQuality();
+      if (kd_data.feature_mutable(i)->metaValueExists(Constants::UserParam::DC_CHARGE_ADDUCTS) &&
+         (kd_data.feature_mutable(i)->getQuality() > best_quality) &&
+         (kd_data.feature_mutable(i)->getCharge()))
+      {
+       best_quality = kd_data.feature_mutable(i)->getQuality();
+       best_quality_index = i;
+      }
+      if (kd_data.feature_mutable(i)->metaValueExists(Constants::UserParam::ADDUCT_GROUP))
+      {
+        linked_groups.emplace_back(kd_data.feature_mutable(i)->getMetaValue(Constants::UserParam::ADDUCT_GROUP));
+      }
+    }
+    if (kd_data.feature_mutable(best_quality_index)->metaValueExists(Constants::UserParam::DC_CHARGE_ADDUCTS))
+    {
+      cf.setMetaValue(Constants::UserParam::IIMN_BEST_ION, 
+                      adduct.toAdductString(kd_data.feature_mutable(best_quality_index)->getMetaValue(Constants::UserParam::DC_CHARGE_ADDUCTS),
+                                            kd_data.feature_mutable(best_quality_index)->getCharge()));
+    }
+    if (!linked_groups.empty())
+    {
+      cf.setMetaValue(Constants::UserParam::IIMN_LINKED_GROUPS, linked_groups);
+    }
+    avg_quality /= indices.size();
+    cf.setQuality(avg_quality);
+    cf.computeConsensus();
+    out.push_back(cf);
   }
 
   void FeatureGroupingAlgorithmKD::addConsensusFeature_(const vector<Size>& indices, const KDTreeFeatureMaps& kd_data, ConsensusMap& out) const

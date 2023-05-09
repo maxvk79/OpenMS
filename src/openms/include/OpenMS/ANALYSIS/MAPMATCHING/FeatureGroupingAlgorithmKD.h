@@ -243,6 +243,9 @@ private:
     /// Construct consensus feature and add to out map
     void addConsensusFeature_(const std::vector<Size>& indices, const KDTreeFeatureMaps& kd_data, ConsensusMap& out) const;
 
+    /// Construct consensus feature (moving peptide identifications) and add to out map
+    void addConsensusFeatureMove_(const std::vector<Size>& indices, const KDTreeFeatureMaps& kd_data, ConsensusMap& out) const;
+
     /// Current progress for logging
     SignedSize progress_;
 

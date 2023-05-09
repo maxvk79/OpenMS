@@ -61,7 +61,18 @@ public:
     check_defaults_ = false;
   }
 
-  /// Constructor
+  /// Constructor (non-const input maps variant)
+  template <typename MapType>
+  KDTreeFeatureMaps(std::vector<MapType>& maps, const Param& param) :
+    DefaultParamHandler("KDTreeFeatureMaps")
+  {
+    std::cout << "using non const constructor\n";
+    check_defaults_ = false;
+    setParameters(param);
+    addMapsMutable(maps);
+  }
+  
+  /// Constructor (const input maps variant)
   template <typename MapType>
   KDTreeFeatureMaps(const std::vector<MapType>& maps, const Param& param) :
     DefaultParamHandler("KDTreeFeatureMaps")
@@ -74,6 +85,24 @@ public:
   /// Destructor
   ~KDTreeFeatureMaps() override
   {
+  }
+
+  void addMapsMutable(std::vector<std::vector<BaseFeature*>>& maps)
+  {
+    num_maps_ = maps.size();
+
+    for (Size i = 0; i < num_maps_; ++i)
+    {
+      std::cout << "map: " << num_maps_ << "\n";
+      std::vector<BaseFeature*>& m = maps[i];
+      for (auto basefeature_ptr : m) //Im Zweifel auto
+      {
+        addFeatureMutable(i, basefeature_ptr);
+        std::cout << "feature added\n";
+      }
+    }
+    std::cout << "maps added successfully\n";
+    optimizeTree();
   }
 
   /// Add @p maps and balance kd-tree
@@ -93,26 +122,17 @@ public:
     optimizeTree();
   }
 
-  void addMaps(const std::vector<std::vector<const BaseFeature*>>& maps)
-  {
-    num_maps_ = maps.size();
-
-    for (Size i = 0; i < num_maps_; ++i)
-    {
-      const std::vector<const BaseFeature*>& m = maps[i];
-      for (const BaseFeature* basefeature_ptr : m) //Im Zweifel auto
-      {
-        addFeature(i, basefeature_ptr);
-      }
-    }
-    optimizeTree();
-  }
-
   /// Add feature
   void addFeature(Size mt_map_index, const BaseFeature* feature);
 
-  /// Return pointer to feature i
+  /// Add feature (non-const pointer)
+  void addFeatureMutable(Size mt_map_index, BaseFeature* feature);
+
+  /// Return const pointer to feature i
   const BaseFeature* feature(Size i) const;
+
+  /// Return non-const pointer to feature i
+  BaseFeature* feature_mutable(Size i) const;
 
   /// RT
   double rt(Size i) const;
@@ -131,6 +151,9 @@ public:
 
   /// Number of features stored
   Size size() const;
+
+  /// Number of non-const features stored
+  Size sizeNonConst() const;
 
   /// Number of points in the tree
   Size treeSize() const;
@@ -159,6 +182,9 @@ protected:
 
   /// Feature data
   std::vector<const BaseFeature*> features_;
+
+  /// non-const Feature data
+  std::vector<BaseFeature*> features_mutable_;
 
   /// Map indices
   std::vector<Size> map_index_;

@@ -40,6 +40,18 @@ using namespace std;
 namespace OpenMS
 {
 
+void KDTreeFeatureMaps::addFeatureMutable(Size mt_map_index, BaseFeature* feature)
+{
+  map_index_.push_back(mt_map_index);
+  features_mutable_.push_back(feature);
+  rt_.push_back(feature->getRT());
+  cout << "feature info added\n";
+  KDTreeFeatureNode mt_node(this, sizeNonConst() - 1);
+  cout << "kdtree feature node constructed\n";
+  kd_tree_.insert(mt_node);
+  cout << "kdtree node inserted\n";
+}
+
 void KDTreeFeatureMaps::addFeature(Size mt_map_index, const BaseFeature* feature)
 {
   map_index_.push_back(mt_map_index);
@@ -53,6 +65,11 @@ void KDTreeFeatureMaps::addFeature(Size mt_map_index, const BaseFeature* feature
 const BaseFeature* KDTreeFeatureMaps::feature(Size i) const
 {
   return features_[i];
+}
+
+BaseFeature* KDTreeFeatureMaps::feature_mutable(Size i) const
+{
+  return features_mutable_[i];
 }
 
 double KDTreeFeatureMaps::rt(Size i) const
@@ -83,6 +100,11 @@ Size KDTreeFeatureMaps::mapIndex(Size i) const
 Size KDTreeFeatureMaps::size() const
 {
   return features_.size();
+}
+
+Size KDTreeFeatureMaps::sizeNonConst() const
+{
+  return features_mutable_.size();
 }
 
 Size KDTreeFeatureMaps::treeSize() const
