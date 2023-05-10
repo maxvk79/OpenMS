@@ -516,9 +516,11 @@ namespace OpenMS
     float best_quality = 0;
     size_t best_quality_index = 0;
     vector<String> linked_groups;
+
     for (vector<Size>::const_iterator it = indices.begin(); it != indices.end(); ++it)
     {
       Size i = *it;
+      //kd_data.feature_mutable(i)
       cf.insert_move(kd_data.mapIndex(i), *(kd_data.feature_mutable(i)));
       avg_quality += kd_data.feature_mutable(i)->getQuality();
       if (kd_data.feature_mutable(i)->metaValueExists(Constants::UserParam::DC_CHARGE_ADDUCTS) &&

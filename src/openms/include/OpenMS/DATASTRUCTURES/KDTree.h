@@ -1295,6 +1295,7 @@ public:
   {
     if (!_M_get_root())
     {
+      std::cout << "insert root \n";
       _Link_type __n = _M_new_node(__V, &_M_header);
       ++_M_count;
       _M_set_root(__n);
@@ -1302,6 +1303,7 @@ public:
       _M_set_rightmost(__n);
       return iterator(__n);
     }
+    std::cout << "insert no root\n";
     return _M_insert(_M_get_root(), __V, 0);
   }
 

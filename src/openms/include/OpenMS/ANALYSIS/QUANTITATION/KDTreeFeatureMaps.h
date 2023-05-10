@@ -69,7 +69,7 @@ public:
     std::cout << "using non const constructor\n";
     check_defaults_ = false;
     setParameters(param);
-    addMapsMutable(maps);
+    addMaps(maps);
   }
   
   /// Constructor (const input maps variant)
@@ -93,37 +93,34 @@ public:
 
     for (Size i = 0; i < num_maps_; ++i)
     {
-      std::cout << "map: " << num_maps_ << "\n";
       std::vector<BaseFeature*>& m = maps[i];
-      for (auto basefeature_ptr : m) //Im Zweifel auto
+      for (auto basefeature_ptr : m)
       {
         addFeatureMutable(i, basefeature_ptr);
-        std::cout << "feature added\n";
       }
     }
-    std::cout << "maps added successfully\n";
     optimizeTree();
   }
 
   /// Add @p maps and balance kd-tree
   template <typename MapType>
-  void addMaps(const std::vector<MapType>& maps)
+  void addMaps(std::vector<MapType>& maps)
   {
     num_maps_ = maps.size();
 
     for (Size i = 0; i < num_maps_; ++i)
     {
-      const MapType& m = maps[i];
-      for (typename MapType::const_iterator it = m.begin(); it != m.end(); ++it)
+      MapType& m = maps[i];
+      for (auto it : m)
       {
-        addFeature(i, &(*it));
+        addFeature(i, it);
       }
     }
     optimizeTree();
   }
 
   /// Add feature
-  void addFeature(Size mt_map_index, const BaseFeature* feature);
+  void addFeature(Size mt_map_index, BaseFeature* feature);
 
   /// Add feature (non-const pointer)
   void addFeatureMutable(Size mt_map_index, BaseFeature* feature);

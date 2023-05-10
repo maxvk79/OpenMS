@@ -45,14 +45,12 @@ void KDTreeFeatureMaps::addFeatureMutable(Size mt_map_index, BaseFeature* featur
   map_index_.push_back(mt_map_index);
   features_mutable_.push_back(feature);
   rt_.push_back(feature->getRT());
-  cout << "feature info added\n";
+  //cout << "feature info added\n";
   KDTreeFeatureNode mt_node(this, sizeNonConst() - 1);
-  cout << "kdtree feature node constructed\n";
   kd_tree_.insert(mt_node);
-  cout << "kdtree node inserted\n";
 }
 
-void KDTreeFeatureMaps::addFeature(Size mt_map_index, const BaseFeature* feature)
+void KDTreeFeatureMaps::addFeature(Size mt_map_index, BaseFeature* feature)
 {
   map_index_.push_back(mt_map_index);
   features_.push_back(feature);
