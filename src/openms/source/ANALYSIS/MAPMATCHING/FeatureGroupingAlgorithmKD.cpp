@@ -199,7 +199,7 @@ namespace OpenMS
         double partition_start = partition_boundaries[j];
         double partition_end = partition_boundaries[j+1];
 
-        std::vector<std::vector<BaseFeature*>> tmp_input_maps(input_maps.size());
+        std::vector<std::vector<const BaseFeature*>> tmp_input_maps(input_maps.size());
         for (size_t k = 0; k < input_maps.size(); k++)
         {
           // iterate over all features in the current input map and append
@@ -218,7 +218,6 @@ namespace OpenMS
 
         // set up kd-tree
         KDTreeFeatureMaps kd_data(tmp_input_maps, param_);
-        cout << "kdtree successfully set up\n";
         aligner.addRTFitData(kd_data);
         setProgress(progress++);
       }
@@ -548,6 +547,9 @@ namespace OpenMS
     avg_quality /= indices.size();
     cf.setQuality(avg_quality);
     cf.computeConsensus();
+    cout << cf << "\n";
+    int e;
+    cin >> e;
     out.push_back(cf);
   }
 

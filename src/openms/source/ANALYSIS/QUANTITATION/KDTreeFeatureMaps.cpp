@@ -45,12 +45,22 @@ void KDTreeFeatureMaps::addFeatureMutable(Size mt_map_index, BaseFeature* featur
   map_index_.push_back(mt_map_index);
   features_mutable_.push_back(feature);
   rt_.push_back(feature->getRT());
-  //cout << "feature info added\n";
+  
   KDTreeFeatureNode mt_node(this, sizeNonConst() - 1);
   kd_tree_.insert(mt_node);
 }
 
-void KDTreeFeatureMaps::addFeature(Size mt_map_index, BaseFeature* feature)
+void KDTreeFeatureMaps::addFeatureConst(Size mt_map_index, const BaseFeature* feature)
+{
+  map_index_.push_back(mt_map_index);
+  features_.push_back(feature);
+  rt_.push_back(feature->getRT());
+
+  KDTreeFeatureNode mt_node(this, size() - 1);
+  kd_tree_.insert(mt_node);
+}
+
+void KDTreeFeatureMaps::addFeature(Size mt_map_index, const BaseFeature* feature)
 {
   map_index_.push_back(mt_map_index);
   features_.push_back(feature);
@@ -77,7 +87,14 @@ double KDTreeFeatureMaps::rt(Size i) const
 
 double KDTreeFeatureMaps::mz(Size i) const
 {
-  return features_[i]->getMZ();
+  if (features_.size() >= features_mutable_.size())
+  {
+    return features_[i]->getMZ();
+  }
+  else
+  {
+    return features_mutable_[i]->getMZ();
+  }
 }
 
 float KDTreeFeatureMaps::intensity(Size i) const
