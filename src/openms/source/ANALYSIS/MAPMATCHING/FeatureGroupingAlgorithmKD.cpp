@@ -161,7 +161,10 @@ namespace OpenMS
 
     // partition at boundaries -> this should be safe because there cannot be
     // any cluster reaching across boundaries
+
+    // by Max
     // Really? YES, because of mz tolerance
+    // disjunkte Partiotionen
 
     sort(massrange.begin(), massrange.end());
     int pts_per_partition = massrange.size() / (int)(param_.getValue("nr_partitions"));
@@ -170,37 +173,7 @@ namespace OpenMS
     double max_mz_tol = max(mz_tol_, warp_mz_tol);
 
     // compute partition boundaries 
-
-
-
-  
- 
-    // compute hard partition boundaries 
-   
-  
-
-
-   //zwei verschiedene partition_boundaries vektoren -> äußere schleife für alle hard_cuts -> 
-   // über alle harten Partitionen, compute inner, overlap Partitions
-   // hier kann paralleliesiert werden 
-   // disjunkte Partiotionen
-   vector<double> overlap_partition_boundaries;                 //davon gibt es einen ODER Vector von Vektoren 
-   for(int i = 0; i < hard_partition_boundaries.size(); i ++)
-   {
-
-    // compute individual massrange for the outer partition 
-
-    overlap_partition_boundaries
-
-     overlap_partition_boundaries.push_back(); 
-
-      // overlap Partitionen müssen mindestens 4* max_mz_tol groß sein 
-
-   }
-
-
-    vector<double> partition_boundaries;  // ersetzten durch hard_boundaries 
-    vector<double> overlap_partition_boundaries;  
+    vector<double> partition_boundaries;  
     partition_boundaries.push_back(massrange.front());
     for (size_t j = 0; j < massrange.size()-1; j++)
     {
@@ -533,9 +506,8 @@ namespace OpenMS
     out.push_back(cf);
   }
 
-
-  // use Pointer version ??? 
-  // Move an dieser Stelle !!!???!!!
+/*
+  // use Pointer version ???  Move an dieser Stelle !!!???!!!
   std::vector<MapType> fill_tmp_input_map_partition (const vector<double> partition_boundaries; vector<MapType>& input_maps) 
   {
     double partition_start = partition_boundaries[j];
@@ -559,6 +531,36 @@ namespace OpenMS
     }
     return tmp_input_maps; 
   }
+*/
+
+
+   // Move Semantics 
+
+  std::vector<MapType> fill_tmp_input_map_partition(const std::vector<double>& partition_boundaries, std::vector<MapType>& input_maps)
+  {
+    std::vector<MapType> tmp_input_maps(input_maps.size());
+
+    for (size_t j = 0; j < partition_boundaries.size() - 1; j++)
+    {
+      double partition_start = partition_boundaries[j];
+      double partition_end = partition_boundaries[j + 1];
+
+      for (size_t k = 0; k < input_maps.size(); k++)
+      {
+        for (auto it = std::make_move_iterator(input_maps[k].begin()); it != std::make_move_iterator(input_maps[k].end()); ++it)
+        {
+          if (it->getMZ() >= partition_start && it->getMZ() < partition_end)
+          {
+            tmp_input_maps[k].push_back(std::move(*it));
+          }
+        }
+        tmp_input_maps[k].updateRanges();
+      }
+    }
+    return tmp_input_maps;
+  }
+
+
 
 } // namespace OpenMS
 
@@ -571,3 +573,26 @@ namespace OpenMS
 
      // beim schreiben in die Consensus Map gleichheitsabfrage von Consensus Featur, damit nicht doppelt !!!!  
         // an welcher Stelle???? 
+
+
+   //zwei verschiedene partition_boundaries vektoren -> äußere schleife für alle hard_cuts -> 
+   // über alle harten Partitionen, compute inner, overlap Partitions
+   // hier kann paralleliesiert werden 
+
+/*
+
+      vector<double> overlap_partition_boundaries;                 //davon gibt es einen ODER Vector von Vektoren 
+   for(int i = 0; i < hard_partition_boundaries.size(); i ++)
+   {
+
+    // compute individual massrange for the outer partition 
+
+    overlap_partition_boundaries
+
+     overlap_partition_boundaries.push_back(); 
+
+      // overlap Partitionen müssen mindestens 4* max_mz_tol groß sein 
+
+   }
+ */
+
