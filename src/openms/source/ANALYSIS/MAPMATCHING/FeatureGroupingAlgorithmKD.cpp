@@ -32,7 +32,6 @@
 // $Authors: Johannes Veit $
 // --------------------------------------------------------------------------
 
-// 110
 
 #include <OpenMS/ANALYSIS/MAPMATCHING/FeatureGroupingAlgorithmKD.h>
 #include <OpenMS/ANALYSIS/MAPMATCHING/MapAlignmentAlgorithmKD.h>
@@ -162,7 +161,7 @@ namespace OpenMS
 
     // partition at boundaries -> this should be safe because there cannot be
     // any cluster reaching across boundaries
-    // Really? Don't think so?  YES 
+    // Really? YES, because of mz tolerance
 
     sort(massrange.begin(), massrange.end());
     int pts_per_partition = massrange.size() / (int)(param_.getValue("nr_partitions"));
@@ -173,13 +172,12 @@ namespace OpenMS
     // compute partition boundaries 
 
 
-    //  partitions_boundaries als Tuple ??? eher nict  
-    //  anzahl der Partitionen user_param oder so viel es geht?
+
   
  
-   // compute hard partition boundaries 
+    // compute hard partition boundaries 
    
-   // 180
+  
 
 
    //zwei verschiedene partition_boundaries vektoren -> äußere schleife für alle hard_cuts -> 
@@ -229,28 +227,10 @@ namespace OpenMS
       Size progress = 0;
       startProgress(0, partition_boundaries.size(), "computing RT transformations");
       
-      // Filling of the Partitions in external function 
-      // Move an dieser Stelle !!!???!!!
-      fill_tmp_input_map_partition(partition_boundaries, input_maps); 
-    
-
-
-
-
-
- 
-
- 
-
-
-
-
-     
-
-
-
-      
-
+      for (size_t j = 0; j < partition_boundaries.size()-1; j++)
+      {
+        // Partitionen an dieser stelle überhaput notwendig / sinnvoll? 
+        std::vector<MapType> tmp_input_maps = fill_tmp_input_map_partition(partition_boundaries, input_maps); 
 
         // set up kd-tree
         KDTreeFeatureMaps kd_data(tmp_input_maps, param_);
@@ -274,41 +254,12 @@ namespace OpenMS
 
     // ------------ run alignment + feature linking on individual partitions ------------
 
-   
-  //  alte IDEEN 
-  //        bool overlap_cut;  otherwise hard cut
-
-
-
-  // beim schreiben in die Consensus Map gleichheitsabfrage von Consensus Featur, damit nicht doppelt !!!!  
-  // an welcher Stelle???? 
-
     Size progress = 0;
     startProgress(0, partition_boundaries.size(), "linking features");
-
-    // hier erstmal alles wie gehabt 
     
     for (size_t j = 0; j < partition_boundaries.size()-1; j++)
     {
-      double partition_start = partition_boundaries[j];
-      double partition_end = partition_boundaries[j+1];
-
-      std::vector<MapType> tmp_input_maps(input_maps.size());
-      for (size_t k = 0; k < input_maps.size(); k++)
-      {
-        // iterate over all features in the current input map and append
-        // matching features (within the current partition) to the temporary
-        // map
-        for (size_t m = 0; m < input_maps[k].size(); m++)
-        {
-          if (input_maps[k][m].getMZ() >= partition_start + 2*max_mz_tol &&  // overlap
-              input_maps[k][m].getMZ() < partition_end - 2*max_mz_tol)       // overlap 
-          {
-            tmp_input_maps[k].push_back(input_maps[k][m]);
-          }
-        }
-        tmp_input_maps[k].updateRanges();
-      }
+      std::vector<MapType> tmp_input_maps = fill_tmp_input_map_partition(partition_boundaries, input_maps); 
 
       // set up kd-tree
       KDTreeFeatureMaps kd_data(tmp_input_maps, param_);
@@ -584,55 +535,39 @@ namespace OpenMS
 
 
   // use Pointer version ??? 
+  // Move an dieser Stelle !!!???!!!
   std::vector<MapType> fill_tmp_input_map_partition (const vector<double> partition_boundaries; vector<MapType>& input_maps) 
   {
-    for (size_t j = 0; j < partition_boundaries.size()-1; j++)
+    double partition_start = partition_boundaries[j];
+    double partition_end = partition_boundaries[j+1];
+
+    std::vector<MapType> tmp_input_maps(input_maps.size());
+    for (size_t k = 0; k < input_maps.size(); k++)
     {
-      double partition_start = partition_boundaries[j];
-      double partition_end = partition_boundaries[j+1];
-
-      std::vector<MapType> tmp_input_maps(input_maps.size());
-      for (size_t k = 0; k < input_maps.size(); k++)
+      // iterate over all features in the current input map and append
+      // matching features (within the current partition) to the temporary
+      // map
+      for (size_t m = 0; m < input_maps[k].size(); m++)
       {
-        // iterate over all features in the current input map and append
-        // matching features (within the current partition) to the temporary
-        // map
-        for (size_t m = 0; m < input_maps[k].size(); m++)
+        if (input_maps[k][m].getMZ() >= partition_start &&   // overlap: + 2*max_mz_tol
+            input_maps[k][m].getMZ() < partition_end)        // overlap: - 2*max_mz_tol
         {
-          if (input_maps[k][m].getMZ() >= partition_start &&   // overlap: + 2*max_mz_tol
-              input_maps[k][m].getMZ() < partition_end)        // overlap: - 2*max_mz_tol
-          {
-            tmp_input_maps[k].push_back(input_maps[k][m]);
-          }
+          tmp_input_maps[k].push_back(input_maps[k][m]);
         }
-        tmp_input_maps[k].updateRanges();
       }
-      return tmp_input_maps; 
+      tmp_input_maps[k].updateRanges();
     }
-
-
-
-     for (size_t j = 0; j < partition_boundaries.size()-1; j++)
-      {
-        double partition_start = partition_boundaries[j];
-        double partition_end = partition_boundaries[j+1];
-
-        std::vector<MapType> tmp_input_maps(input_maps.size());
-        for (size_t k = 0; k < input_maps.size(); k++)
-        {
-          // iterate over all features in the current input map and append
-          // matching features (within the current partition) to the temporary
-          // map
-          for (size_t m = 0; m < input_maps[k].size(); m++)
-          {
-            if (input_maps[k][m].getMZ() >= partition_start + 2*max_mz_tol &&   // overlap
-                input_maps[k][m].getMZ() < partition_end - 2*max_mz_tol)        // overlap
-            {
-              tmp_input_maps[k].push_back(input_maps[k][m]);
-            }
-          }
-          tmp_input_maps[k].updateRanges();
-        }
-
+    return tmp_input_maps; 
+  }
 
 } // namespace OpenMS
+
+
+     // alte Ideen
+         // partitions_boundaries als Tuple ??? eher nict  
+         // anzahl der Partitionen user_param oder so viel es geht?
+         // overlap partition boundaries ;  bool overlap_cut;  otherwise hard cut
+
+
+     // beim schreiben in die Consensus Map gleichheitsabfrage von Consensus Featur, damit nicht doppelt !!!!  
+        // an welcher Stelle???? 
