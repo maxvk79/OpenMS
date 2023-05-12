@@ -179,7 +179,7 @@ namespace OpenMS
  
    // compute hard partition boundaries 
    
-  // 180
+   // 180
 
 
    //zwei verschiedene partition_boundaries vektoren -> äußere schleife für alle hard_cuts -> 
