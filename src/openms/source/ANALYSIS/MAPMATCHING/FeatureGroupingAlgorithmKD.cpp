@@ -534,8 +534,7 @@ namespace OpenMS
 */
 
 
-   // Move Semantics 
-
+  // Move  
   std::vector<MapType> fill_tmp_input_map_partition(const std::vector<double>& partition_boundaries, std::vector<MapType>& input_maps)
   {
     std::vector<MapType> tmp_input_maps(input_maps.size());
