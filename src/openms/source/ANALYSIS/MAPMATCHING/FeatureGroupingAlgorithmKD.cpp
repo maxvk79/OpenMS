@@ -249,7 +249,7 @@ namespace OpenMS
     }
     endProgress();
     
-    postprocess_(input_maps, out);
+    postprocess_(input_maps, out); // das hier müsste weg, wenn die Input Maps hier nicht mehr leben
   }
 
   void FeatureGroupingAlgorithmKD::group(const std::vector<FeatureMap>& maps,
@@ -506,14 +506,17 @@ namespace OpenMS
     out.push_back(cf);
   }
 
-/*
-  // use Pointer version ???  Move an dieser Stelle !!!???!!!
+
+  // use Pointer version ???
+
   std::vector<MapType> fill_tmp_input_map_partition (const vector<double> partition_boundaries; vector<MapType>& input_maps) 
   {
+    std::vector<MapType> tmp_input_maps(input_maps.size());
+
     double partition_start = partition_boundaries[j];
     double partition_end = partition_boundaries[j+1];
 
-    std::vector<MapType> tmp_input_maps(input_maps.size());
+    
     for (size_t k = 0; k < input_maps.size(); k++)
     {
       // iterate over all features in the current input map and append
@@ -531,10 +534,10 @@ namespace OpenMS
     }
     return tmp_input_maps; 
   }
-*/
 
 
-  // Move  
+
+ // Move instead of push back
   std::vector<MapType> fill_tmp_input_map_partition(const std::vector<double>& partition_boundaries, std::vector<MapType>& input_maps)
   {
     std::vector<MapType> tmp_input_maps(input_maps.size());
@@ -558,6 +561,9 @@ namespace OpenMS
     }
     return tmp_input_maps;
   }
+
+
+
 
 
 
