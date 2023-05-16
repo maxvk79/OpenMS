@@ -54,14 +54,40 @@ public:
   /// 2D tree on features
   typedef KDTree::KDTree<2,KDTreeFeatureNode> FeatureKDTree;
 
+  /// Type of feature data (const pointer, non-const pointer, none/default)
+  enum FeatureDataType
+  {
+    FEATURE_DATA_CONST,
+    FEATURE_DATA_NON_CONST,
+    FEATURE_DATA_DEFAULT
+  };
+
   /// Default constructor
   KDTreeFeatureMaps() :
-    DefaultParamHandler("KDTreeFeatureMaps")
+    DefaultParamHandler("KDTreeFeatureMaps"), feature_data_type_(FEATURE_DATA_DEFAULT)
   {
     check_defaults_ = false;
   }
 
-  /// Constructor
+  /// Constructor (non-const input maps variant)
+  KDTreeFeatureMaps(std::vector<std::vector<BaseFeature*>>& maps, const Param& param) :
+    DefaultParamHandler("KDTreeFeatureMaps"), feature_data_type_(FEATURE_DATA_NON_CONST)
+  {
+    check_defaults_ = false;
+    setParameters(param);
+    addMapsMutable(maps);
+  }
+  
+  /// Constructor (const input maps variant)
+  KDTreeFeatureMaps(std::vector<std::vector<const BaseFeature*>>& maps, const Param& param) :
+    DefaultParamHandler("KDTreeFeatureMaps"), feature_data_type_(FEATURE_DATA_CONST)
+  {
+    check_defaults_ = false;
+    setParameters(param);
+    addMapsConst(maps);
+  }
+
+  /// Constructor (MapType template)
   template <typename MapType>
   KDTreeFeatureMaps(const std::vector<MapType>& maps, const Param& param) :
     DefaultParamHandler("KDTreeFeatureMaps")
@@ -76,12 +102,41 @@ public:
   {
   }
 
+  void addMapsMutable(std::vector<std::vector<BaseFeature*>>& maps)
+  {
+    num_maps_ = maps.size();
+
+    for (Size i = 0; i < num_maps_; ++i)
+    {
+      std::vector<BaseFeature*>& m = maps[i];
+      for (auto basefeature_ptr : m)
+      {
+        addFeatureMutable(i, basefeature_ptr);
+      }
+    }
+    optimizeTree();
+  }
+
+  void addMapsConst(std::vector<std::vector<const BaseFeature*>>& maps)
+  {
+    num_maps_ = maps.size();
+
+    for (Size i = 0; i < num_maps_; ++i)
+    {
+      std::vector<const BaseFeature*>& m = maps[i];
+      for (const BaseFeature* basefeature_ptr : m)
+      {
+        addFeatureConst(i, basefeature_ptr);
+      }
+    }
+    optimizeTree();
+  }
+
   /// Add @p maps and balance kd-tree
   template <typename MapType>
   void addMaps(const std::vector<MapType>& maps)
   {
     num_maps_ = maps.size();
-
     for (Size i = 0; i < num_maps_; ++i)
     {
       const MapType& m = maps[i];
@@ -93,11 +148,20 @@ public:
     optimizeTree();
   }
 
-  /// Add feature
+  /// Add feature (Const pointer)
+  void addFeatureConst(Size mt_map_index, const BaseFeature* feature);
+
+  /// Add feature (non-const pointer)
+  void addFeatureMutable(Size mt_map_index, BaseFeature* feature);
+  
+  /// Add feature (MapType template)
   void addFeature(Size mt_map_index, const BaseFeature* feature);
 
-  /// Return pointer to feature i
+  /// Return const pointer to feature i
   const BaseFeature* feature(Size i) const;
+
+  /// Return non-const pointer to feature i
+  BaseFeature* feature_mutable(Size i) const;
 
   /// RT
   double rt(Size i) const;
@@ -116,6 +180,9 @@ public:
 
   /// Number of features stored
   Size size() const;
+
+  /// Number of non-const features stored
+  Size sizeNonConst() const;
 
   /// Number of points in the tree
   Size treeSize() const;
@@ -138,12 +205,18 @@ public:
   /// Apply RT transformations
   void applyTransformations(const std::vector<TransformationModelLowess*>& trafos);
 
+  /// Get type of feature data
+  FeatureDataType getFeatureDataType() const;
+
 protected:
 
   void updateMembers_() override;
 
-  /// Feature data
+  /// const feature data
   std::vector<const BaseFeature*> features_;
+
+  /// non-const feature data
+  std::vector<BaseFeature*> features_mutable_;
 
   /// Map indices
   std::vector<Size> map_index_;
@@ -157,6 +230,8 @@ protected:
   /// 2D tree on features from all input maps.
   FeatureKDTree kd_tree_;
 
+  /// Type of feature data
+  const FeatureDataType feature_data_type_;
 };
 }
 
