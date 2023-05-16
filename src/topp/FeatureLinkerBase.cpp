@@ -187,135 +187,84 @@ protected:
         }
       }
 
-
-      //---------------------------------------------------------------------------
-      if(false)
+      String mem_current;
       {
-        //-------------------------------------------------------------
-        // Preprocessing: compute partitions
-        //-------------------------------------------------------------
-        //vector<FeatureMap> maps(ins.size());
-        FeatureXMLFile f;
-        FeatureFileOptions param = f.getOptions();
-
-        param.setLoadSubordinates(false);
-        param.setLoadConvexHull(false);
-
-        f.setOptions(param);
-        
-        
-        vector<double> massrange;
-        for(Size i = 0; i < ins.size(); ++i)
-        {
-          FeatureMap tmp;
-          f.load(ins[i], tmp);
-
-          StringList ms_runs;
-          tmp.getPrimaryMSRunPath(ms_runs);
-
-          // associate mzML file with map i in consensusXML
-          if (ms_runs.size() > 1 || ms_runs.empty())
-          {
-            OPENMS_LOG_WARN << "Exactly one MS run should be associated with a FeatureMap. "
-              << ms_runs.size() 
-              << " provided." << endl;
-          }
-          else
-          {
-            out_map.getColumnHeaders()[i].filename = ms_runs.front();
-          }
-          out_map.getColumnHeaders()[i].size = tmp.size();
-          out_map.getColumnHeaders()[i].unique_id = tmp.getUniqueId();
-
-          // copy over information on the primary MS run
-          ms_run_locations.insert(ms_run_locations.end(), ms_runs.begin(), ms_runs.end());
-
-          for (Feature& ft : tmp)
-          {
-            String adduct;
-            String group;
-            //exception: addduct information
-            if (ft.metaValueExists(Constants::UserParam::DC_CHARGE_ADDUCTS))
-            {
-              adduct = ft.getMetaValue(Constants::UserParam::DC_CHARGE_ADDUCTS);
-            }
-            if (ft.metaValueExists(Constants::UserParam::ADDUCT_GROUP))
-            {
-              group = ft.getMetaValue(Constants::UserParam::ADDUCT_GROUP);
-            }
-            ft.getSubordinates().clear();
-            ft.getConvexHulls().clear();
-            ft.clearMetaInfo();
-            if (!adduct.empty())
-            {
-              ft.setMetaValue(Constants::UserParam::DC_CHARGE_ADDUCTS, adduct);
-            }
-            if (!group.empty())
-            {
-              ft.setMetaValue("Group", group);
-            }
-            massrange.push_back(ft.getMZ());
-          }
-          //maps[i] = tmp;
-          //maps[i].updateRanges();
-        }
-        stable_sort(massrange.begin(), massrange.end());
-
-        Size numOfPartitions = 2;
-        Size partitionSize = massrange.size() / numOfPartitions;
-        double max_mz_tol = 10.0;
-        vector<double> partition_boundaries = {massrange.front(),massrange.back()};
-
-        //partition_boundaries.push_back(massrange.front());
-        for (Size i = 0; i < numOfPartitions; ++i)
-        {
-          
-        }
-        //partition_boundaries.push_back(massrange.back());
-
-        cout << "minMZ: " << massrange.front() << "\n maxMZ: " << massrange.back() << "\n";
-        
-        cout << "partition size: " << partitionSize << endl;
-        /*
-        Size partitionIndex = 0;
-        vector<double> partition_boundarys;
-        for(Size pt = 0; pt < numOfPartitions; ++pt)
-        {
-          partition_boundarys.push_back(massrange[partitionIndex]);
-          partitionIndex += partitionSize;
-          cout << "partition " << pt << ": " << partition_boundarys[pt] << endl;
-        }
-        partition_boundarys.push_back(massrange.back());
-        cout << "partition " << partition_boundarys.size() << ": " << partition_boundarys.back() << endl;
-        */
-
-
-        for (Size i = 0; i < numOfPartitions; ++i)
-        {
-          vector<FeatureMap> maps(ins.size());
-          DRange<1> mzrange(partition_boundaries.front(),partition_boundaries.back());
-          param.setMZRange(mzrange);
-          cout << "MZ Range used: " << param.getMZRange() << endl;
-          f.setOptions(param);
-          
-          for (Size j = 0; j < ins.size(); ++j)
-          {
-            FeatureMap tmp;
-            f.load(ins[j], tmp);
-            for(Feature& ft : tmp)
-            {
-              ft.getSubordinates().clear();
-              ft.getConvexHulls().clear();
-            }
-            maps[j] = tmp;
-            maps[j].updateRanges();
-          }
-          algorithm->group(maps, out_map);
-          maps.clear();
-        }
+        size_t mem_virtual(0);
+        SysInfo::getProcessMemoryConsumption(mem_virtual);
+        if(mem_virtual != 0) mem_current = String("Current Memory Usage: ") + (mem_virtual / 1024) + " MB";
       }
-      else
+      cout << mem_current << "\n";
+
+      vector<FeatureMap> maps(ins.size());
+      FeatureXMLFile f;
+      FeatureFileOptions param = f.getOptions();
+
+      // to save memory don't load convex hulls and subordinates
+      param.setLoadSubordinates(false);
+      param.setLoadConvexHull(false);
+
+      f.setOptions(param);
+
+      Size progress = 0;
+      setLogType(ProgressLogger::CMD);
+      startProgress(0, ins.size(), "reading input");
+      for (Size i = 0; i < ins.size(); ++i)
       {
+        FeatureMap tmp;
+        f.load(ins[i], tmp);
+
+        StringList ms_runs;
+        tmp.getPrimaryMSRunPath(ms_runs);
+
+        // associate mzML file with map i in consensusXML
+        if (ms_runs.size() > 1 || ms_runs.empty())
+        {
+          OPENMS_LOG_WARN << "Exactly one MS run should be associated with a FeatureMap. "
+            << ms_runs.size() 
+            << " provided." << endl;
+        }
+        else
+        {
+          out_map.getColumnHeaders()[i].filename = ms_runs.front();
+        }
+        out_map.getColumnHeaders()[i].size = tmp.size();
+        out_map.getColumnHeaders()[i].unique_id = tmp.getUniqueId();
+
+        // copy over information on the primary MS run
+        ms_run_locations.insert(ms_run_locations.end(), ms_runs.begin(), ms_runs.end());
+
+        // to save memory, remove convex hulls, subordinates:
+        for (Feature& ft : tmp)
+        {
+          String adduct;
+          String group;
+          //exception: addduct information
+          if (ft.metaValueExists(Constants::UserParam::DC_CHARGE_ADDUCTS))
+          {
+            adduct = ft.getMetaValue(Constants::UserParam::DC_CHARGE_ADDUCTS);
+          }
+          if (ft.metaValueExists(Constants::UserParam::ADDUCT_GROUP))
+          {
+            group = ft.getMetaValue(Constants::UserParam::ADDUCT_GROUP);
+          }
+          ft.getSubordinates().clear();
+          ft.getConvexHulls().clear();
+          ft.clearMetaInfo();
+          if (!adduct.empty())
+          {
+            ft.setMetaValue(Constants::UserParam::DC_CHARGE_ADDUCTS, adduct);
+          }
+          if (!group.empty())
+          {
+            ft.setMetaValue("Group", group);
+          }
+        }
+
+        maps[i] = std::move(tmp);
+        maps[i].updateRanges();
+
+        setProgress(progress++);
+
         String mem_current;
         {
           size_t mem_virtual(0);
@@ -323,126 +272,39 @@ protected:
           if(mem_virtual != 0) mem_current = String("Current Memory Usage: ") + (mem_virtual / 1024) + " MB";
         }
         cout << mem_current << "\n";
+      }
+      endProgress();
 
-        vector<FeatureMap> maps(ins.size());
-        FeatureXMLFile f;
-        FeatureFileOptions param = f.getOptions();
+      // exception for "labeled" algorithms: copy file descriptions
+      if (labeled)
+      {
+        out_map.getColumnHeaders()[1] = out_map.getColumnHeaders()[0];
+        out_map.getColumnHeaders()[0].label = "light";
+        out_map.getColumnHeaders()[1].label = "heavy";
+        ms_run_locations.push_back(ms_run_locations[0]);
+      }
 
-        // to save memory don't load convex hulls and subordinates
-        param.setLoadSubordinates(false);
-        param.setLoadConvexHull(false);
-
-        f.setOptions(param);
-
-        Size progress = 0;
-        setLogType(ProgressLogger::CMD);
-        startProgress(0, ins.size(), "reading input");
-        for (Size i = 0; i < ins.size(); ++i)
+      ////////////////////////////////////////////////////
+      // invoke feature grouping algorithm
+      
+      if (frac2files.size() == 1) // group one fraction
+      {      
+        algorithm->group(maps, out_map);
+      }
+      else // group multiple fractions
+      {
+        writeDebug_(String("Stored in ") + String(maps.size()) + " maps.", 3);
+        cout << "grouping "<< frac2files.size() << " fractions...\n";
+        for (Size i = 1; i <= frac2files.size(); ++i)
         {
-          FeatureMap tmp;
-          f.load(ins[i], tmp);
-
-          StringList ms_runs;
-          tmp.getPrimaryMSRunPath(ms_runs);
-
-          // associate mzML file with map i in consensusXML
-          if (ms_runs.size() > 1 || ms_runs.empty())
+          vector<FeatureMap> fraction_maps;
+          // TODO FRACTIONS: here we assume that the order of featureXML is from fraction 1..n
+          // we should check if these are shuffled and error / warn          
+          for (size_t feature_map_index = 0; feature_map_index != frac2files[i].size(); ++feature_map_index)
           {
-            OPENMS_LOG_WARN << "Exactly one MS run should be associated with a FeatureMap. "
-              << ms_runs.size() 
-              << " provided." << endl;
+            fraction_maps.push_back(maps[feature_map_index]);
           }
-          else
-          {
-            out_map.getColumnHeaders()[i].filename = ms_runs.front();
-          }
-          out_map.getColumnHeaders()[i].size = tmp.size();
-          out_map.getColumnHeaders()[i].unique_id = tmp.getUniqueId();
-
-          // copy over information on the primary MS run
-          ms_run_locations.insert(ms_run_locations.end(), ms_runs.begin(), ms_runs.end());
-
-          // to save memory, remove convex hulls, subordinates:
-          for (Feature& ft : tmp)
-          {
-            String adduct;
-            String group;
-            //exception: addduct information
-            if (ft.metaValueExists(Constants::UserParam::DC_CHARGE_ADDUCTS))
-            {
-              adduct = ft.getMetaValue(Constants::UserParam::DC_CHARGE_ADDUCTS);
-            }
-            if (ft.metaValueExists(Constants::UserParam::ADDUCT_GROUP))
-            {
-              group = ft.getMetaValue(Constants::UserParam::ADDUCT_GROUP);
-            }
-            ft.getSubordinates().clear();
-            ft.getConvexHulls().clear();
-            ft.clearMetaInfo();
-            if (!adduct.empty())
-            {
-              ft.setMetaValue(Constants::UserParam::DC_CHARGE_ADDUCTS, adduct);
-            }
-            if (!group.empty())
-            {
-              ft.setMetaValue("Group", group);
-            }
-
-          }
-
-          maps[i] = std::move(tmp);
-          maps[i].updateRanges();
-
-          setProgress(progress++);
-
-          String mem_current;
-          {
-            size_t mem_virtual(0);
-            SysInfo::getProcessMemoryConsumption(mem_virtual);
-            if(mem_virtual != 0) mem_current = String("Current Memory Usage: ") + (mem_virtual / 1024) + " MB";
-          }
-          cout << mem_current << "\n";
-        }
-        endProgress();
-
-        // exception for "labeled" algorithms: copy file descriptions
-        if (labeled)
-        {
-          out_map.getColumnHeaders()[1] = out_map.getColumnHeaders()[0];
-          out_map.getColumnHeaders()[0].label = "light";
-          out_map.getColumnHeaders()[1].label = "heavy";
-          ms_run_locations.push_back(ms_run_locations[0]);
-        }
-
-        ////////////////////////////////////////////////////
-        // invoke feature grouping algorithm
-        
-        if (frac2files.size() == 1) // group one fraction
-        {
-          cout << "grouping one fraction...\n";
-          for (size_t l = 0; l < maps.size(); l++)
-          {
-            cout << "map " << l << " with size: " << maps[l].size() << "\n";
-          }
-          
-        
-          algorithm->group(maps, out_map);
-        }
-        else // group multiple fractions
-        {
-          writeDebug_(String("Stored in ") + String(maps.size()) + " maps.", 3);
-          cout << "grouping "<< frac2files.size() << " fractions...\n";
-          for (Size i = 1; i <= frac2files.size(); ++i)
-          {
-            vector<FeatureMap> fraction_maps;
-            // TODO FRACTIONS: here we assume that the order of featureXML is from fraction 1..n
-            // we should check if these are shuffled and error / warn          
-            for (size_t feature_map_index = 0; feature_map_index != frac2files[i].size(); ++feature_map_index)
-            {
-              fraction_maps.push_back(maps[feature_map_index]);
-            }
-            algorithm->group(fraction_maps, out_map);
-          }
+          algorithm->group(fraction_maps, out_map);
         }
       }
     }

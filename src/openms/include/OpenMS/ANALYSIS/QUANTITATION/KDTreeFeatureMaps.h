@@ -54,16 +54,24 @@ public:
   /// 2D tree on features
   typedef KDTree::KDTree<2,KDTreeFeatureNode> FeatureKDTree;
 
+  /// Type of feature data (const pointer, non-const pointer, none/default)
+  enum FeatureDataType
+  {
+    FEATURE_DATA_CONST,
+    FEATURE_DATA_NON_CONST,
+    FEATURE_DATA_DEFAULT
+  };
+
   /// Default constructor
   KDTreeFeatureMaps() :
-    DefaultParamHandler("KDTreeFeatureMaps")
+    DefaultParamHandler("KDTreeFeatureMaps"), feature_data_type_(FEATURE_DATA_DEFAULT)
   {
     check_defaults_ = false;
   }
 
   /// Constructor (non-const input maps variant)
   KDTreeFeatureMaps(std::vector<std::vector<BaseFeature*>>& maps, const Param& param) :
-    DefaultParamHandler("KDTreeFeatureMaps")
+    DefaultParamHandler("KDTreeFeatureMaps"), feature_data_type_(FEATURE_DATA_NON_CONST)
   {
     check_defaults_ = false;
     setParameters(param);
@@ -71,9 +79,8 @@ public:
   }
   
   /// Constructor (const input maps variant)
-  //template <typename MapType>
   KDTreeFeatureMaps(std::vector<std::vector<const BaseFeature*>>& maps, const Param& param) :
-    DefaultParamHandler("KDTreeFeatureMaps")
+    DefaultParamHandler("KDTreeFeatureMaps"), feature_data_type_(FEATURE_DATA_CONST)
   {
     check_defaults_ = false;
     setParameters(param);
@@ -198,14 +205,17 @@ public:
   /// Apply RT transformations
   void applyTransformations(const std::vector<TransformationModelLowess*>& trafos);
 
+  /// Get type of feature data
+  FeatureDataType getFeatureDataType() const;
+
 protected:
 
   void updateMembers_() override;
 
-  /// Feature data
+  /// const feature data
   std::vector<const BaseFeature*> features_;
 
-  /// non-const Feature data
+  /// non-const feature data
   std::vector<BaseFeature*> features_mutable_;
 
   /// Map indices
@@ -220,6 +230,8 @@ protected:
   /// 2D tree on features from all input maps.
   FeatureKDTree kd_tree_;
 
+  /// Type of feature data
+  const FeatureDataType feature_data_type_;
 };
 }
 

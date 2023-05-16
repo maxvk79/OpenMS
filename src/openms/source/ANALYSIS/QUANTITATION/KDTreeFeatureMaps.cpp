@@ -72,7 +72,18 @@ void KDTreeFeatureMaps::addFeature(Size mt_map_index, const BaseFeature* feature
 
 const BaseFeature* KDTreeFeatureMaps::feature(Size i) const
 {
-  return features_[i];
+  if (getFeatureDataType() == FEATURE_DATA_CONST)
+  {
+    return features_[i];
+  }
+  else if(getFeatureDataType() == FEATURE_DATA_NON_CONST)
+  {
+    return features_mutable_[i];
+  }
+  else
+  {
+    throw Exception::MissingInformation(__FILE__, __LINE__, OPENMS_PRETTY_FUNCTION, "No data available");
+  }
 }
 
 BaseFeature* KDTreeFeatureMaps::feature_mutable(Size i) const
@@ -87,24 +98,50 @@ double KDTreeFeatureMaps::rt(Size i) const
 
 double KDTreeFeatureMaps::mz(Size i) const
 {
-  if (features_.size() >= features_mutable_.size())
+  if (getFeatureDataType() == FEATURE_DATA_CONST)
   {
     return features_[i]->getMZ();
   }
-  else
+  else if(getFeatureDataType() == FEATURE_DATA_NON_CONST)
   {
     return features_mutable_[i]->getMZ();
+  }
+  else
+  {
+    throw Exception::MissingInformation(__FILE__, __LINE__, OPENMS_PRETTY_FUNCTION, "No data available");
   }
 }
 
 float KDTreeFeatureMaps::intensity(Size i) const
 {
-  return features_[i]->getIntensity();
+  if (getFeatureDataType() == FEATURE_DATA_CONST)
+  {
+    return features_[i]->getIntensity();
+  }
+  else if(getFeatureDataType() == FEATURE_DATA_NON_CONST)
+  {
+    return features_mutable_[i]->getIntensity();
+  }
+  else
+  {
+    throw Exception::MissingInformation(__FILE__, __LINE__, OPENMS_PRETTY_FUNCTION, "No data available");
+  }
 }
 
 Int KDTreeFeatureMaps::charge(Size i) const
 {
-  return features_[i]->getCharge();
+  if (getFeatureDataType() == FEATURE_DATA_CONST)
+  {
+    return features_[i]->getCharge();
+  }
+  else if(getFeatureDataType() == FEATURE_DATA_NON_CONST)
+  {
+    return features_mutable_[i]->getCharge();
+  }
+  else
+  {
+    throw Exception::MissingInformation(__FILE__, __LINE__, OPENMS_PRETTY_FUNCTION, "No data available");
+  }
 }
 
 Size KDTreeFeatureMaps::mapIndex(Size i) const
@@ -114,7 +151,18 @@ Size KDTreeFeatureMaps::mapIndex(Size i) const
 
 Size KDTreeFeatureMaps::size() const
 {
-  return features_.size();
+  if (getFeatureDataType() == FEATURE_DATA_CONST)
+  {
+    return features_.size();
+  }
+  else if(getFeatureDataType() == FEATURE_DATA_NON_CONST)
+  {
+    return features_mutable_.size();
+  }
+  else
+  {
+    throw Exception::MissingInformation(__FILE__, __LINE__, OPENMS_PRETTY_FUNCTION, "No data available");
+  }
 }
 
 Size KDTreeFeatureMaps::sizeNonConst() const
@@ -135,6 +183,7 @@ Size KDTreeFeatureMaps::numMaps() const
 void KDTreeFeatureMaps::clear()
 {
   features_.clear();
+  features_mutable_.clear();
   map_index_.clear();
   kd_tree_.clear();
 }
@@ -159,21 +208,47 @@ void KDTreeFeatureMaps::getNeighborhood(Size index, vector<Size>& result_indices
   }
   else // max log fold change check enabled
   {
-    double int_1 = features_[index]->getIntensity();
-
-    for (vector<Size>::const_iterator it = tmp_result.begin(); it != tmp_result.end(); ++it)
+    if(feature_data_type_ == FEATURE_DATA_CONST)
     {
-      double int_2 = features_[*it]->getIntensity();
-      double abs_log_fc = fabs(log10(int_2 / int_1));
+      double int_1 = features_[index]->getIntensity();
 
-      // abs_log_fc could assume +nan or +inf if negative
-      // or zero intensity features were present, but
-      // this shouldn't cause a problem. they just wouldn't
-      // be used.
-      if (abs_log_fc <= max_pairwise_log_fc)
+      for (vector<Size>::const_iterator it = tmp_result.begin(); it != tmp_result.end(); ++it)
       {
-        result_indices.push_back(*it);
+        double int_2 = features_[*it]->getIntensity();
+        double abs_log_fc = fabs(log10(int_2 / int_1));
+
+        // abs_log_fc could assume +nan or +inf if negative
+        // or zero intensity features were present, but
+        // this shouldn't cause a problem. they just wouldn't
+        // be used.
+        if (abs_log_fc <= max_pairwise_log_fc)
+        {
+          result_indices.push_back(*it);
+        }
       }
+    }
+    else if(feature_data_type_ == FEATURE_DATA_NON_CONST)
+    {
+      double int_1 = features_mutable_[index]->getIntensity();
+
+      for (vector<Size>::const_iterator it = tmp_result.begin(); it != tmp_result.end(); ++it)
+      {
+        double int_2 = features_mutable_[*it]->getIntensity();
+        double abs_log_fc = fabs(log10(int_2 / int_1));
+
+        // abs_log_fc could assume +nan or +inf if negative
+        // or zero intensity features were present, but
+        // this shouldn't cause a problem. they just wouldn't
+        // be used.
+        if (abs_log_fc <= max_pairwise_log_fc)
+        {
+          result_indices.push_back(*it);
+        }
+      }
+    }
+    else
+    {
+      throw Exception::MissingInformation(__FILE__, __LINE__, OPENMS_PRETTY_FUNCTION, "No data available");
     }
   }
 }
@@ -205,10 +280,29 @@ void KDTreeFeatureMaps::queryRegion(double rt_low, double rt_high, double mz_low
 
 void KDTreeFeatureMaps::applyTransformations(const vector<TransformationModelLowess*>& trafos)
 {
-  for (Size i = 0; i < size(); ++i)
+  if(feature_data_type_ == FEATURE_DATA_CONST)
   {
-    rt_[i] = trafos[map_index_[i]]->evaluate(features_[i]->getRT());
+    for (Size i = 0; i < size(); ++i)
+    {
+      rt_[i] = trafos[map_index_[i]]->evaluate(features_[i]->getRT());
+    }
   }
+  else if(feature_data_type_ == FEATURE_DATA_NON_CONST)
+  {
+    for (Size i = 0; i < size(); ++i)
+    {
+      rt_[i] = trafos[map_index_[i]]->evaluate(features_mutable_[i]->getRT());
+    }
+  }
+  else
+  {
+    throw Exception::MissingInformation(__FILE__, __LINE__, OPENMS_PRETTY_FUNCTION, "No data available");
+  }
+}
+
+KDTreeFeatureMaps::FeatureDataType KDTreeFeatureMaps::getFeatureDataType() const
+{
+  return feature_data_type_;
 }
 
 void KDTreeFeatureMaps::updateMembers_()
