@@ -57,7 +57,6 @@ public:
   /// Type of feature data (const pointer, non-const pointer, none/default)
   enum FeatureDataType
   {
-    FEATURE_DATA_CONST,
     FEATURE_DATA_NON_CONST,
     FEATURE_DATA_DEFAULT
   };
@@ -75,12 +74,12 @@ public:
   {
     check_defaults_ = false;
     setParameters(param);
-    addMapsMutable(maps);
+    addMapsNonConst(maps);
   }
   
   /// Constructor (const input maps variant)
   KDTreeFeatureMaps(std::vector<std::vector<const BaseFeature*>>& maps, const Param& param) :
-    DefaultParamHandler("KDTreeFeatureMaps"), feature_data_type_(FEATURE_DATA_CONST)
+    DefaultParamHandler("KDTreeFeatureMaps"), feature_data_type_(FEATURE_DATA_DEFAULT)
   {
     check_defaults_ = false;
     setParameters(param);
@@ -90,7 +89,7 @@ public:
   /// Constructor (MapType template)
   template <typename MapType>
   KDTreeFeatureMaps(const std::vector<MapType>& maps, const Param& param) :
-    DefaultParamHandler("KDTreeFeatureMaps")
+    DefaultParamHandler("KDTreeFeatureMaps"), feature_data_type_(FEATURE_DATA_DEFAULT)
   {
     check_defaults_ = false;
     setParameters(param);
@@ -102,7 +101,8 @@ public:
   {
   }
 
-  void addMapsMutable(std::vector<std::vector<BaseFeature*>>& maps)
+  /// Add maps and balance kd-tree (non-const pointer variant)
+  void addMapsNonConst(std::vector<std::vector<BaseFeature*>>& maps)
   {
     num_maps_ = maps.size();
 
@@ -111,12 +111,13 @@ public:
       std::vector<BaseFeature*>& m = maps[i];
       for (auto basefeature_ptr : m)
       {
-        addFeatureMutable(i, basefeature_ptr);
+        addFeatureNonConst(i, basefeature_ptr);
       }
     }
     optimizeTree();
   }
 
+  /// Add maps and balance kd-tree (const pointer variant)
   void addMapsConst(std::vector<std::vector<const BaseFeature*>>& maps)
   {
     num_maps_ = maps.size();
@@ -142,26 +143,23 @@ public:
       const MapType& m = maps[i];
       for (typename MapType::const_iterator it = m.begin(); it != m.end(); ++it)
       {
-        addFeature(i, &(*it));
+        addFeatureConst(i, &(*it));
       }
     }
     optimizeTree();
   }
 
-  /// Add feature (Const pointer)
-  void addFeatureConst(Size mt_map_index, const BaseFeature* feature);
-
   /// Add feature (non-const pointer)
-  void addFeatureMutable(Size mt_map_index, BaseFeature* feature);
+  void addFeatureNonConst(Size mt_map_index, BaseFeature* feature);
   
   /// Add feature (MapType template)
-  void addFeature(Size mt_map_index, const BaseFeature* feature);
+  void addFeatureConst(Size mt_map_index, const BaseFeature* feature);
 
   /// Return const pointer to feature i
   const BaseFeature* feature(Size i) const;
 
   /// Return non-const pointer to feature i
-  BaseFeature* feature_mutable(Size i) const;
+  BaseFeature* featureNonConst(Size i) const;
 
   /// RT
   double rt(Size i) const;
@@ -180,9 +178,6 @@ public:
 
   /// Number of features stored
   Size size() const;
-
-  /// Number of non-const features stored
-  Size sizeNonConst() const;
 
   /// Number of points in the tree
   Size treeSize() const;
