@@ -40,13 +40,13 @@ using namespace std;
 namespace OpenMS
 {
 
-void KDTreeFeatureMaps::addFeatureMutable(Size mt_map_index, BaseFeature* feature)
+void KDTreeFeatureMaps::addFeatureNonConst(Size mt_map_index, BaseFeature* feature)
 {
   map_index_.push_back(mt_map_index);
   features_mutable_.push_back(feature);
   rt_.push_back(feature->getRT());
   
-  KDTreeFeatureNode mt_node(this, sizeNonConst() - 1);
+  KDTreeFeatureNode mt_node(this, size() - 1);
   kd_tree_.insert(mt_node);
 }
 
@@ -60,33 +60,16 @@ void KDTreeFeatureMaps::addFeatureConst(Size mt_map_index, const BaseFeature* fe
   kd_tree_.insert(mt_node);
 }
 
-void KDTreeFeatureMaps::addFeature(Size mt_map_index, const BaseFeature* feature)
-{
-  map_index_.push_back(mt_map_index);
-  features_.push_back(feature);
-  rt_.push_back(feature->getRT());
-
-  KDTreeFeatureNode mt_node(this, size() - 1);
-  kd_tree_.insert(mt_node);
-}
-
 const BaseFeature* KDTreeFeatureMaps::feature(Size i) const
 {
-  if (getFeatureDataType() == FEATURE_DATA_CONST)
+  if (getFeatureDataType() == FEATURE_DATA_DEFAULT)
   {
     return features_[i];
   }
-  else if(getFeatureDataType() == FEATURE_DATA_NON_CONST)
-  {
-    return features_mutable_[i];
-  }
-  else
-  {
-    throw Exception::MissingInformation(__FILE__, __LINE__, OPENMS_PRETTY_FUNCTION, "No data available");
-  }
+  return features_mutable_[i];
 }
 
-BaseFeature* KDTreeFeatureMaps::feature_mutable(Size i) const
+BaseFeature* KDTreeFeatureMaps::featureNonConst(Size i) const
 {
   return features_mutable_[i];
 }
@@ -98,47 +81,29 @@ double KDTreeFeatureMaps::rt(Size i) const
 
 double KDTreeFeatureMaps::mz(Size i) const
 {
-  if (getFeatureDataType() == FEATURE_DATA_CONST)
+  if (getFeatureDataType() == FEATURE_DATA_DEFAULT)
   {
     return features_[i]->getMZ();
   }
-  else if(getFeatureDataType() == FEATURE_DATA_NON_CONST)
-  {
-    return features_mutable_[i]->getMZ();
-  }
-  else
-  {
-    throw Exception::MissingInformation(__FILE__, __LINE__, OPENMS_PRETTY_FUNCTION, "No data available");
-  }
+  return features_mutable_[i]->getMZ();
 }
 
 float KDTreeFeatureMaps::intensity(Size i) const
 {
-  if (getFeatureDataType() == FEATURE_DATA_CONST)
+  if (getFeatureDataType() == FEATURE_DATA_DEFAULT)
   {
     return features_[i]->getIntensity();
   }
-  else if(getFeatureDataType() == FEATURE_DATA_NON_CONST)
-  {
-    return features_mutable_[i]->getIntensity();
-  }
-  else
-  {
-    throw Exception::MissingInformation(__FILE__, __LINE__, OPENMS_PRETTY_FUNCTION, "No data available");
-  }
+  return features_mutable_[i]->getIntensity();
 }
 
 Int KDTreeFeatureMaps::charge(Size i) const
 {
-  if(getFeatureDataType() == FEATURE_DATA_CONST)
+  if (getFeatureDataType() == FEATURE_DATA_DEFAULT)
   {
     return features_[i]->getCharge();
   }
-  if(getFeatureDataType() == FEATURE_DATA_NON_CONST)
-  {
-    return features_mutable_[i]->getCharge();
-  }
-  throw Exception::MissingInformation(__FILE__, __LINE__, OPENMS_PRETTY_FUNCTION, "No data available");
+  return features_mutable_[i]->getCharge();
 }
 
 Size KDTreeFeatureMaps::mapIndex(Size i) const
@@ -148,19 +113,10 @@ Size KDTreeFeatureMaps::mapIndex(Size i) const
 
 Size KDTreeFeatureMaps::size() const
 {
-  if(getFeatureDataType() == FEATURE_DATA_CONST)
+  if (getFeatureDataType() == FEATURE_DATA_DEFAULT)
   {
     return features_.size();
   }
-  if(getFeatureDataType() == FEATURE_DATA_NON_CONST)
-  {
-    return features_mutable_.size();
-  }
-  throw Exception::MissingInformation(__FILE__, __LINE__, OPENMS_PRETTY_FUNCTION, "No data available");
-}
-
-Size KDTreeFeatureMaps::sizeNonConst() const
-{
   return features_mutable_.size();
 }
 
@@ -202,7 +158,7 @@ void KDTreeFeatureMaps::getNeighborhood(Size index, vector<Size>& result_indices
   }
   else // max log fold change check enabled
   {
-    if(feature_data_type_ == FEATURE_DATA_CONST)
+    if(feature_data_type_ == FEATURE_DATA_DEFAULT)
     {
       double int_1 = features_[index]->getIntensity();
 
@@ -220,30 +176,25 @@ void KDTreeFeatureMaps::getNeighborhood(Size index, vector<Size>& result_indices
           result_indices.push_back(*it);
         }
       }
+      return;
     }
-    else if(feature_data_type_ == FEATURE_DATA_NON_CONST)
+    double int_1 = features_mutable_[index]->getIntensity();
+
+    for (vector<Size>::const_iterator it = tmp_result.begin(); it != tmp_result.end(); ++it)
     {
-      double int_1 = features_mutable_[index]->getIntensity();
+      double int_2 = features_mutable_[*it]->getIntensity();
+      double abs_log_fc = fabs(log10(int_2 / int_1));
 
-      for (vector<Size>::const_iterator it = tmp_result.begin(); it != tmp_result.end(); ++it)
+      // abs_log_fc could assume +nan or +inf if negative
+      // or zero intensity features were present, but
+      // this shouldn't cause a problem. they just wouldn't
+      // be used.
+      if (abs_log_fc <= max_pairwise_log_fc)
       {
-        double int_2 = features_mutable_[*it]->getIntensity();
-        double abs_log_fc = fabs(log10(int_2 / int_1));
-
-        // abs_log_fc could assume +nan or +inf if negative
-        // or zero intensity features were present, but
-        // this shouldn't cause a problem. they just wouldn't
-        // be used.
-        if (abs_log_fc <= max_pairwise_log_fc)
-        {
-          result_indices.push_back(*it);
-        }
+        result_indices.push_back(*it);
       }
     }
-    else
-    {
-      throw Exception::MissingInformation(__FILE__, __LINE__, OPENMS_PRETTY_FUNCTION, "No data available");
-    }
+    return;
   }
 }
 
@@ -274,7 +225,7 @@ void KDTreeFeatureMaps::queryRegion(double rt_low, double rt_high, double mz_low
 
 void KDTreeFeatureMaps::applyTransformations(const vector<TransformationModelLowess*>& trafos)
 {
-  if(feature_data_type_ == FEATURE_DATA_CONST)
+  if(feature_data_type_ == FEATURE_DATA_DEFAULT)
   {
     for (Size i = 0; i < size(); ++i)
     {
@@ -282,7 +233,7 @@ void KDTreeFeatureMaps::applyTransformations(const vector<TransformationModelLow
     }
     return; 
   }
-  if(feature_data_type_ == FEATURE_DATA_NON_CONST)
+  else
   {
     for (Size i = 0; i < size(); ++i)
     {
@@ -290,7 +241,6 @@ void KDTreeFeatureMaps::applyTransformations(const vector<TransformationModelLow
     }
     return; 
   }
-  throw Exception::MissingInformation(__FILE__, __LINE__, OPENMS_PRETTY_FUNCTION, "No data available");
 }
 
 KDTreeFeatureMaps::FeatureDataType KDTreeFeatureMaps::getFeatureDataType() const

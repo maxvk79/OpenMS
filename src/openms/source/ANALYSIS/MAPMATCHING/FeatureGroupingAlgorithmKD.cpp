@@ -127,7 +127,7 @@ namespace OpenMS
                                        "At least two maps must be given!");
     }
 
-    //out.clear(false);
+    out.clear();
 
     // collect all m/z values for partitioning, find intensity maximum
     vector<double> massrange;
@@ -185,6 +185,7 @@ namespace OpenMS
     }
     // add last partition (a bit more since we use "smaller than" below)
     partition_boundaries.push_back(massrange.back() + 1.0);
+    std::cout << "Number of partitions used: " << partition_boundaries.size() - 1 << "\n";
 
     // ------------ compute RT transformation models ------------
 
@@ -213,7 +214,6 @@ namespace OpenMS
               tmp_input_maps[k].push_back(&(input_maps[k][m]));
             }
           }
-          //tmp_input_maps[k].updateRanges();
         }
 
         // set up kd-tree
@@ -258,7 +258,6 @@ namespace OpenMS
             tmp_input_maps[k].push_back(&(input_maps[k][m]));
           }
         }
-        //tmp_input_maps[k].updateRanges();
       }
 
       // set up kd-tree
@@ -276,8 +275,6 @@ namespace OpenMS
       setProgress(progress++);
     }
     endProgress();
-    
-    std::cout << "Clustering done... Number of consensus features: " << out.size() << "\n";
 
     postprocess_(input_maps, out);
   }
@@ -347,8 +344,6 @@ namespace OpenMS
       updateClusterProxies_(potential_clusters, cluster_for_idx, update_these, assigned, kd_data);
     }
   }
-
-
 
   void FeatureGroupingAlgorithmKD::updateClusterProxies_(set<ClusterProxyKD>& potential_clusters,
                                                          vector<ClusterProxyKD>& cluster_for_idx,
@@ -502,7 +497,7 @@ namespace OpenMS
     size_t best_quality_index = 0;
     // collect the "Group" MetaValues of Features in a ConsensusFeature MetaValue (Constant::UserParam::IIMN_LINKED_GROUPS)
     vector<String> linked_groups;
-    if (kd_data.getFeatureDataType() == KDTreeFeatureMaps::FEATURE_DATA_CONST)
+    if (kd_data.getFeatureDataType() == KDTreeFeatureMaps::FEATURE_DATA_DEFAULT)
     {
       for (vector<Size>::const_iterator it = indices.begin(); it != indices.end(); ++it)
       {
@@ -522,29 +517,25 @@ namespace OpenMS
         }
       }
     }
-    else if(kd_data.getFeatureDataType() == KDTreeFeatureMaps::FEATURE_DATA_NON_CONST)
+    else
     {
       for (vector<Size>::const_iterator it = indices.begin(); it != indices.end(); ++it)
       {
         Size i = *it;
-        cf.insert_move(kd_data.mapIndex(i), *(kd_data.feature_mutable(i)));
-        avg_quality += kd_data.feature_mutable(i)->getQuality();
-        if (kd_data.feature_mutable(i)->metaValueExists(Constants::UserParam::DC_CHARGE_ADDUCTS) &&
-          (kd_data.feature_mutable(i)->getQuality() > best_quality) &&
-          (kd_data.feature_mutable(i)->getCharge()))
+        cf.insert_move(kd_data.mapIndex(i), *(kd_data.featureNonConst(i)));
+        avg_quality += kd_data.featureNonConst(i)->getQuality();
+        if (kd_data.featureNonConst(i)->metaValueExists(Constants::UserParam::DC_CHARGE_ADDUCTS) &&
+          (kd_data.featureNonConst(i)->getQuality() > best_quality) &&
+          (kd_data.featureNonConst(i)->getCharge()))
         {
-        best_quality = kd_data.feature_mutable(i)->getQuality();
+        best_quality = kd_data.featureNonConst(i)->getQuality();
         best_quality_index = i;
         }
-        if (kd_data.feature_mutable(i)->metaValueExists(Constants::UserParam::ADDUCT_GROUP))
+        if (kd_data.featureNonConst(i)->metaValueExists(Constants::UserParam::ADDUCT_GROUP))
         {
-          linked_groups.emplace_back(kd_data.feature_mutable(i)->getMetaValue(Constants::UserParam::ADDUCT_GROUP));
+          linked_groups.emplace_back(kd_data.featureNonConst(i)->getMetaValue(Constants::UserParam::ADDUCT_GROUP));
         }
       }
-    }
-    else
-    {
-      throw Exception::MissingInformation(__FILE__, __LINE__, OPENMS_PRETTY_FUNCTION, "No data available");
     }
 
     if (kd_data.feature(best_quality_index)->metaValueExists(Constants::UserParam::DC_CHARGE_ADDUCTS))

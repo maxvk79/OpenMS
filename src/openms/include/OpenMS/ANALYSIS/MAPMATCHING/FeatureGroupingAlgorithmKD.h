@@ -189,14 +189,14 @@ public:
     ~FeatureGroupingAlgorithmKD() override;
 
     /**
-        @brief Applies the algorithm to feature maps. The input maps might be changed during grouping.
+        @brief Applies the algorithm to feature maps. The input maps might be changed after grouping.
 
         @exception IllegalArgument is thrown if less than two input maps are given.
     */
     void group(std::vector<FeatureMap>& maps, ConsensusMap& out) override;
 
     /**
-        @brief Applies the algorithm to consensus maps. The input maps might be changed during grouping.
+        @brief Applies the algorithm to consensus maps. The input maps might be changed after grouping.
 
         @exception IllegalArgument is thrown if less than two input maps are given.
     */
