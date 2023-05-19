@@ -176,26 +176,25 @@ void KDTreeFeatureMaps::getNeighborhood(Size index, vector<Size>& result_indices
           result_indices.push_back(*it);
         }
       }
+      return;
     }
-    else
+    double int_1 = features_mutable_[index]->getIntensity();
+
+    for (vector<Size>::const_iterator it = tmp_result.begin(); it != tmp_result.end(); ++it)
     {
-      double int_1 = features_mutable_[index]->getIntensity();
+      double int_2 = features_mutable_[*it]->getIntensity();
+      double abs_log_fc = fabs(log10(int_2 / int_1));
 
-      for (vector<Size>::const_iterator it = tmp_result.begin(); it != tmp_result.end(); ++it)
+      // abs_log_fc could assume +nan or +inf if negative
+      // or zero intensity features were present, but
+      // this shouldn't cause a problem. they just wouldn't
+      // be used.
+      if (abs_log_fc <= max_pairwise_log_fc)
       {
-        double int_2 = features_mutable_[*it]->getIntensity();
-        double abs_log_fc = fabs(log10(int_2 / int_1));
-
-        // abs_log_fc could assume +nan or +inf if negative
-        // or zero intensity features were present, but
-        // this shouldn't cause a problem. they just wouldn't
-        // be used.
-        if (abs_log_fc <= max_pairwise_log_fc)
-        {
-          result_indices.push_back(*it);
-        }
+        result_indices.push_back(*it);
       }
     }
+    return;
   }
 }
 

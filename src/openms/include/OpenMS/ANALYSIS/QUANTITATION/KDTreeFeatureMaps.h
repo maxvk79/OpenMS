@@ -54,7 +54,7 @@ public:
   /// 2D tree on features
   typedef KDTree::KDTree<2,KDTreeFeatureNode> FeatureKDTree;
 
-  /// Type of feature data (const pointer, non-const pointer, none/default)
+  /// Type of feature data (non-const pointer, none/default)
   enum FeatureDataType
   {
     FEATURE_DATA_NON_CONST,
@@ -101,7 +101,7 @@ public:
   {
   }
 
-  /// Add maps and balance kd-tree (non-const pointer variant)
+  /// Add @p maps and balance kd-tree (non-const pointer variant)
   void addMapsNonConst(std::vector<std::vector<BaseFeature*>>& maps)
   {
     num_maps_ = maps.size();
@@ -109,7 +109,7 @@ public:
     for (Size i = 0; i < num_maps_; ++i)
     {
       std::vector<BaseFeature*>& m = maps[i];
-      for (auto basefeature_ptr : m)
+      for (BaseFeature* basefeature_ptr : m)
       {
         addFeatureNonConst(i, basefeature_ptr);
       }
@@ -117,7 +117,7 @@ public:
     optimizeTree();
   }
 
-  /// Add maps and balance kd-tree (const pointer variant)
+  /// Add @p maps and balance kd-tree (const pointer variant)
   void addMapsConst(std::vector<std::vector<const BaseFeature*>>& maps)
   {
     num_maps_ = maps.size();
