@@ -130,18 +130,15 @@ float KDTreeFeatureMaps::intensity(Size i) const
 
 Int KDTreeFeatureMaps::charge(Size i) const
 {
-  if (getFeatureDataType() == FEATURE_DATA_CONST)
+  if(getFeatureDataType() == FEATURE_DATA_CONST)
   {
     return features_[i]->getCharge();
   }
-  else if(getFeatureDataType() == FEATURE_DATA_NON_CONST)
+  if(getFeatureDataType() == FEATURE_DATA_NON_CONST)
   {
     return features_mutable_[i]->getCharge();
   }
-  else
-  {
-    throw Exception::MissingInformation(__FILE__, __LINE__, OPENMS_PRETTY_FUNCTION, "No data available");
-  }
+  throw Exception::MissingInformation(__FILE__, __LINE__, OPENMS_PRETTY_FUNCTION, "No data available");
 }
 
 Size KDTreeFeatureMaps::mapIndex(Size i) const
@@ -151,18 +148,15 @@ Size KDTreeFeatureMaps::mapIndex(Size i) const
 
 Size KDTreeFeatureMaps::size() const
 {
-  if (getFeatureDataType() == FEATURE_DATA_CONST)
+  if(getFeatureDataType() == FEATURE_DATA_CONST)
   {
     return features_.size();
   }
-  else if(getFeatureDataType() == FEATURE_DATA_NON_CONST)
+  if(getFeatureDataType() == FEATURE_DATA_NON_CONST)
   {
     return features_mutable_.size();
   }
-  else
-  {
-    throw Exception::MissingInformation(__FILE__, __LINE__, OPENMS_PRETTY_FUNCTION, "No data available");
-  }
+  throw Exception::MissingInformation(__FILE__, __LINE__, OPENMS_PRETTY_FUNCTION, "No data available");
 }
 
 Size KDTreeFeatureMaps::sizeNonConst() const
@@ -286,18 +280,17 @@ void KDTreeFeatureMaps::applyTransformations(const vector<TransformationModelLow
     {
       rt_[i] = trafos[map_index_[i]]->evaluate(features_[i]->getRT());
     }
+    return; 
   }
-  else if(feature_data_type_ == FEATURE_DATA_NON_CONST)
+  if(feature_data_type_ == FEATURE_DATA_NON_CONST)
   {
     for (Size i = 0; i < size(); ++i)
     {
       rt_[i] = trafos[map_index_[i]]->evaluate(features_mutable_[i]->getRT());
     }
+    return; 
   }
-  else
-  {
-    throw Exception::MissingInformation(__FILE__, __LINE__, OPENMS_PRETTY_FUNCTION, "No data available");
-  }
+  throw Exception::MissingInformation(__FILE__, __LINE__, OPENMS_PRETTY_FUNCTION, "No data available");
 }
 
 KDTreeFeatureMaps::FeatureDataType KDTreeFeatureMaps::getFeatureDataType() const
