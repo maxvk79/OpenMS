@@ -231,6 +231,7 @@ void KDTreeFeatureMaps::applyTransformations(const vector<TransformationModelLow
     {
       rt_[i] = trafos[map_index_[i]]->evaluate(features_[i]->getRT());
     }
+    return; 
   }
   else
   {
@@ -238,6 +239,7 @@ void KDTreeFeatureMaps::applyTransformations(const vector<TransformationModelLow
     {
       rt_[i] = trafos[map_index_[i]]->evaluate(features_mutable_[i]->getRT());
     }
+    return; 
   }
 }
 
