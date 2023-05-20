@@ -201,6 +201,7 @@ namespace OpenMS
         double partition_end = partition_boundaries[j+1];
 
         std::vector<std::vector<const BaseFeature*>> tmp_input_maps(input_maps.size());
+        int partition_size = 0;  
         for (size_t k = 0; k < input_maps.size(); k++)
         {
           // iterate over all features in the current input map and append
@@ -212,10 +213,11 @@ namespace OpenMS
                 input_maps[k][m].getMZ() < partition_end)
             {
               tmp_input_maps[k].push_back(&(input_maps[k][m]));
+              ++partition_size; 
             }
           }
         }
-
+        std::cout << "members in this partition: "<< partition_size << endl; 
         // set up kd-tree
         KDTreeFeatureMaps kd_data(tmp_input_maps, param_);
         aligner.addRTFitData(kd_data);
