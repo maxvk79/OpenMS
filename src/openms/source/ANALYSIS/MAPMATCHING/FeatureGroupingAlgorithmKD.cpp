@@ -217,7 +217,7 @@ namespace OpenMS
             }
           }
         }
-        std::cout << "members in this partition: "<< partition_size << endl; 
+        std::cout << "first members in this partition: "<< partition_size << endl; 
         // set up kd-tree
         KDTreeFeatureMaps kd_data(tmp_input_maps, param_);
         aligner.addRTFitData(kd_data);
@@ -241,6 +241,7 @@ namespace OpenMS
     // ------------ run alignment + feature linking on individual partitions ------------
     Size progress = 0;
     startProgress(0, partition_boundaries.size(), "linking features");
+    int partition_size = 0;
     for (size_t j = 0; j < partition_boundaries.size()-1; j++)
     {
       double partition_start = partition_boundaries[j];
@@ -258,9 +259,11 @@ namespace OpenMS
               input_maps[k][m].getMZ() < partition_end)
           {
             tmp_input_maps[k].push_back(&(input_maps[k][m]));
+            ++partition_size; 
           }
         }
       }
+      std::cout << "second: members in this partition: "<< partition_size << endl; 
 
       // set up kd-tree
       KDTreeFeatureMaps kd_data(tmp_input_maps, param_);
