@@ -218,15 +218,15 @@ namespace OpenMS
           }
           tmp_input_maps[k].updateRanges();
         }
-        std::cout << "RT Transform - memeber of this partition: " << partition_size << endl; // MAX
-        all_partitions_rt.push_back(partitions_size);
+        std::cout << "RT Transform - memeber of this partition: " << partition_size << endl;
+        all_partitions_rt.push_back(partition_size);
         // set up kd-tree
         KDTreeFeatureMaps kd_data(tmp_input_maps, param_);
         aligner.addRTFitData(kd_data);
         setProgress(progress++);
       }
 
-      std::cout << "size of all partitions should be 100, it is: " << all_partitions_rt.size()<< endl; //MAX
+      std::cout << "size of all partitions should be 100, it is: " << all_partitions_rt.size()<< endl; 
       // fit LOWESS on RT fit data collected across all partitions
       try
       {
@@ -263,12 +263,12 @@ namespace OpenMS
               input_maps[k][m].getMZ() < partition_end)
           {
             tmp_input_maps[k].push_back(input_maps[k][m]);
-            ++partition_size; //MAX
+            ++partition_size; 
           }
         }
         tmp_input_maps[k].updateRanges();
       }
-      std::cout << "alignment + linking -  member of this partition " << partition_size << endl; // MAX
+      std::cout << "alignment + linking -  member of this partition " << partition_size << endl; 
       all_partitions_linking.push_back(partition_size);
       // set up kd-tree
       KDTreeFeatureMaps kd_data(tmp_input_maps, param_);
