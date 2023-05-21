@@ -262,6 +262,7 @@ namespace OpenMS
             ++partition_size; 
           }
         }
+        tmp_input_maps[k].updateRanges();
       }
       std::cout << "second: members in this partition: "<< partition_size << endl; 
       // set up kd-tree
