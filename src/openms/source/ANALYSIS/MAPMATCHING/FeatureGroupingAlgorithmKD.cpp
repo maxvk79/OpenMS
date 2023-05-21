@@ -242,7 +242,7 @@ namespace OpenMS
     Size progress = 0;
     startProgress(0, partition_boundaries.size(), "linking features");
     
-    //std::vector<int> partition_sizes; 
+    std::vector<int> all_partitions; 
     for (size_t j = 0; j < partition_boundaries.size()-1; j++)
     {
       double partition_start = partition_boundaries[j];
@@ -266,7 +266,7 @@ namespace OpenMS
         }
       }
       std::cout << "alignment + linking: members in this partition: "<< partition_size << endl; 
-      //partition_sizes.push_back(partition_size); 
+      all_partitions.push_back(partition_size); 
       
 
       // set up kd-tree
@@ -284,7 +284,7 @@ namespace OpenMS
       setProgress(progress++);
     }
     endProgress();
-    //std::cout << partition_sizes.size() << endl; 
+    std::cout << "number of partitions should be 100 " << all_partitions.size() << endl; 
 
     postprocess_(input_maps, out);
   }
