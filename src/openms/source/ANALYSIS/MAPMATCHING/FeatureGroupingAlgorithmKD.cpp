@@ -195,6 +195,7 @@ namespace OpenMS
     {
       Size progress = 0;
       startProgress(0, partition_boundaries.size(), "computing RT transformations");
+      std::vector<int> all_partitions_rt;
       for (size_t j = 0; j < partition_boundaries.size()-1; j++)
       {
         double partition_start = partition_boundaries[j];
@@ -217,12 +218,14 @@ namespace OpenMS
             }
           }
         }
+        all_partitions_rt.push_back(partition_size); 
         std::cout << "RT Transssssform - members in this partition: "<< partition_size << endl; 
         // set up kd-tree
         KDTreeFeatureMaps kd_data(tmp_input_maps, param_);
         aligner.addRTFitData(kd_data);
         setProgress(progress++);
       }
+      std::cout << "number of partitions should be 100, it is: " << all_partitions_rt.size() << endl; 
 
       // fit LOWESS on RT fit data collected across all partitions
       try
@@ -242,7 +245,7 @@ namespace OpenMS
     Size progress = 0;
     startProgress(0, partition_boundaries.size(), "linking features");
     
-    std::vector<int> all_partitions; 
+    std::vector<int> all_partitions_linking; 
     for (size_t j = 0; j < partition_boundaries.size()-1; j++)
     {
       double partition_start = partition_boundaries[j];
@@ -266,7 +269,7 @@ namespace OpenMS
         }
       }
       std::cout << "alignment + linking: members in this partition: "<< partition_size << endl; 
-      all_partitions.push_back(partition_size); 
+      all_partitions_linking.push_back(partition_size); 
       
 
       // set up kd-tree
@@ -284,7 +287,7 @@ namespace OpenMS
       setProgress(progress++);
     }
     endProgress();
-    std::cout << "number of partitions should be 100 " << all_partitions.size() << endl; 
+    std::cout << "number of partitions should be 100, it is: " << all_partitions_linking.size() << endl; 
 
     postprocess_(input_maps, out);
   }
