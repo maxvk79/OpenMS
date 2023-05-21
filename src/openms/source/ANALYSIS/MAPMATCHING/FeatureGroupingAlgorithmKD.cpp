@@ -226,7 +226,7 @@ namespace OpenMS
         setProgress(progress++);
       }
 
-      std::cout << "size of all partitions should be 100, it is: " << all_partitions_rt.size(); //MAX
+      std::cout << "size of all partitions should be 100, it is: " << all_partitions_rt.size()<< endl; //MAX
       // fit LOWESS on RT fit data collected across all partitions
       try
       {
@@ -244,6 +244,7 @@ namespace OpenMS
     // ------------ run alignment + feature linking on individual partitions ------------
     Size progress = 0;
     startProgress(0, partition_boundaries.size(), "linking features");
+    std::vector<int> all_partitions_linking; 
     for (size_t j = 0; j < partition_boundaries.size()-1; j++)
     {
       double partition_start = partition_boundaries[j];
@@ -267,7 +268,8 @@ namespace OpenMS
         }
         tmp_input_maps[k].updateRanges();
       }
-      std::cout << "SECOND memeber of this partition " << partition_size << endl; // MAX
+      std::cout << "alignment + linking -  member of this partition " << partition_size << endl; // MAX
+      all_partitions_linking.push_back(partition_size);
       // set up kd-tree
       KDTreeFeatureMaps kd_data(tmp_input_maps, param_);
 
@@ -282,7 +284,7 @@ namespace OpenMS
       setProgress(progress++);
     }
     endProgress();
-    
+    std::cout << "size of all partitions should be 100, it is: " << all_partitions_linking.size() << endl;;
     postprocess_(input_maps, out);
   }
 
