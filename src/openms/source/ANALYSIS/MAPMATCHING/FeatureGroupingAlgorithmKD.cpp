@@ -217,7 +217,7 @@ namespace OpenMS
             }
           }
         }
-        std::cout << "RT Transform - members in this partition: "<< partition_size << endl; 
+        std::cout << "RT Transssssform - members in this partition: "<< partition_size << endl; 
         // set up kd-tree
         KDTreeFeatureMaps kd_data(tmp_input_maps, param_);
         aligner.addRTFitData(kd_data);
@@ -241,14 +241,15 @@ namespace OpenMS
     // ------------ run alignment + feature linking on individual partitions ------------
     Size progress = 0;
     startProgress(0, partition_boundaries.size(), "linking features");
-    int partition_size = 0;
-    std::vector<int> partition_sizes; 
+    
+    //std::vector<int> partition_sizes; 
     for (size_t j = 0; j < partition_boundaries.size()-1; j++)
     {
       double partition_start = partition_boundaries[j];
       double partition_end = partition_boundaries[j+1];
 
       std::vector<std::vector<BaseFeature*>> tmp_input_maps(input_maps.size());
+      int partition_size = 0;
       for (size_t k = 0; k < input_maps.size(); k++)
       {
         // iterate over all features in the current input map and append pointer of
@@ -265,7 +266,7 @@ namespace OpenMS
         }
       }
       std::cout << "alignment + linking: members in this partition: "<< partition_size << endl; 
-      partition_sizes.push_back(partition_size); 
+      //partition_sizes.push_back(partition_size); 
       
 
       // set up kd-tree
@@ -283,7 +284,7 @@ namespace OpenMS
       setProgress(progress++);
     }
     endProgress();
-    std::cout << partitions_sizes.size() << endl; 
+    //std::cout << partition_sizes.size() << endl; 
 
     postprocess_(input_maps, out);
   }
