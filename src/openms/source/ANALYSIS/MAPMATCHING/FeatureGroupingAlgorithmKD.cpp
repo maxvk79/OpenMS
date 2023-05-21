@@ -259,7 +259,7 @@ namespace OpenMS
               input_maps[k][m].getMZ() < partition_end)
           {
             tmp_input_maps[k].push_back(input_maps[k][m]);
-            ++ partition_size; //MAX
+            ++partition_size; //MAX
           }
         }
         tmp_input_maps[k].updateRanges();
