@@ -264,7 +264,6 @@ namespace OpenMS
         }
       }
       std::cout << "second: members in this partition: "<< partition_size << endl; 
-
       // set up kd-tree
       KDTreeFeatureMaps kd_data(tmp_input_maps, param_);
 
