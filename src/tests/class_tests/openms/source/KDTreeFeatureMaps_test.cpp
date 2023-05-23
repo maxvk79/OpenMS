@@ -73,7 +73,7 @@ p.setValue("mz_unit", "ppm");
 KDTreeFeatureMaps* ptr = nullptr;
 KDTreeFeatureMaps* nullPointer = nullptr;
 
-START_SECTION((KDTreeFeatureMaps()))
+START_SECTION((KDTreeFeatureMaps())) // passed
   ptr = new KDTreeFeatureMaps();
   TEST_NOT_EQUAL(ptr, nullPointer)
 END_SECTION
@@ -114,11 +114,12 @@ START_SECTION((void addMaps(const std::vector<MapType>& maps)))
   TEST_EQUAL(kd_data_3.size(), 2);
 END_SECTION
 
-START_SECTION((void addFeature(Size mt_map_index, const BaseFeature* feature)))
+// changes adFeature -> addFeatureConst
+START_SECTION((void addFeatureConst(Size mt_map_index, const BaseFeature* feature)))
   Feature f3;
   f3.setMZ(300);
   f3.setRT(500);
-  kd_data_3.addFeature(2, &f3);
+  kd_data_3.addFeatureConst(2, &f3);
   TEST_EQUAL(kd_data_3.size(), 3);
 END_SECTION
 
@@ -182,6 +183,7 @@ END_SECTION
 START_SECTION((void applyTransformations(const std::vector<TransformationModelLowess*>& trafos)))
   NOT_TESTABLE;
 END_SECTION
+
 
 delete ptr;
 

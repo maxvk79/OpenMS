@@ -141,7 +141,7 @@ namespace OpenMS
 
     peptides_.insert(peptides_.end(), make_move_iterator(ids.begin()), make_move_iterator(ids.end()));
     ids.clear();
-    ids.shrink_to_fit();
+    ids.shrink_to_fit(); // hier wird Speicher freigegeben
   }
 
   void ConsensusFeature::setFeatures(HandleSetType h)
