@@ -82,7 +82,7 @@ START_SECTION((virtual ~KDTreeFeatureMaps()))
   delete ptr;
 END_SECTION
 
-START_SECTION((KDTreeFeatureMaps(const std::vector<MapType>& maps, const Param& param)))
+START_SECTION((KDTreeFeatureMaps(std::vector<MapType>& maps, const Param& param)))
   ptr = new KDTreeFeatureMaps(fmaps, p);
   TEST_NOT_EQUAL(ptr, nullPointer);
   delete ptr;
@@ -109,16 +109,16 @@ END_SECTION
 
 KDTreeFeatureMaps kd_data_3;
 
-START_SECTION((void addMaps(const std::vector<MapType>& maps)))
+START_SECTION((void addMaps(std::vector<MapType>& maps)))
   kd_data_3.addMaps(fmaps);
   TEST_EQUAL(kd_data_3.size(), 2);
 END_SECTION
 
-START_SECTION((void addFeature(Size mt_map_index, const BaseFeature* feature)))
+START_SECTION((void addFeatureConst(Size mt_map_index, const BaseFeature* feature)))
   Feature f3;
   f3.setMZ(300);
   f3.setRT(500);
-  kd_data_3.addFeature(2, &f3);
+  kd_data_3.addFeatureConst(2, &f3);
   TEST_EQUAL(kd_data_3.size(), 3);
 END_SECTION
 
