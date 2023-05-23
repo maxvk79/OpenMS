@@ -127,7 +127,7 @@ namespace OpenMS
                                        "At least two maps must be given!");
     }
 
-    out.clear();
+    out.clear(false);
 
     // collect all m/z values for partitioning, find intensity maximum
     vector<double> massrange;
@@ -136,7 +136,7 @@ namespace OpenMS
          map_it != input_maps.end(); ++map_it)
     {
       for (typename MapType::const_iterator feat_it = map_it->begin();
-          feat_it != map_it->end(); feat_it++)
+          feat_it != map_it->end(); ++feat_it)
       {
         massrange.push_back(feat_it->getMZ());
         double inty = feat_it->getIntensity();
@@ -170,7 +170,7 @@ namespace OpenMS
     // compute partition boundaries
     vector<double> partition_boundaries;
     partition_boundaries.push_back(massrange.front());
-    for (size_t j = 0; j < massrange.size()-1; j++)
+    for (size_t j = 0; j < massrange.size()-1; ++j)
     {
       // minimal differences between two m/z values
       double massrange_diff = mz_ppm_ ? max_mz_tol * 1e-6 * massrange[j+1] : max_mz_tol;
@@ -185,7 +185,7 @@ namespace OpenMS
     }
     // add last partition (a bit more since we use "smaller than" below)
     partition_boundaries.push_back(massrange.back() + 1.0);
-    std::cout << "Number of partitions used: " << partition_boundaries.size() - 1 << "\n";
+
 
     // ------------ compute RT transformation models ------------
 
@@ -195,18 +195,18 @@ namespace OpenMS
     {
       Size progress = 0;
       startProgress(0, partition_boundaries.size(), "computing RT transformations");
-      for (size_t j = 0; j < partition_boundaries.size()-1; j++)
+      for (size_t j = 0; j < partition_boundaries.size()-1; ++j)
       {
         double partition_start = partition_boundaries[j];
         double partition_end = partition_boundaries[j+1];
 
         std::vector<std::vector<const BaseFeature*>> tmp_input_maps(input_maps.size());
-        for (size_t k = 0; k < input_maps.size(); k++)
+        for (size_t k = 0; k < input_maps.size(); ++k)
         {
           // iterate over all features in the current input map and append
           // matching features (within the current partition) to the temporary
           // map
-          for (size_t m = 0; m < input_maps[k].size(); m++)
+          for (size_t m = 0; m < input_maps[k].size(); ++m)
           {
             if (input_maps[k][m].getMZ() >= partition_start &&
                 input_maps[k][m].getMZ() < partition_end)
@@ -239,18 +239,18 @@ namespace OpenMS
     // ------------ run alignment + feature linking on individual partitions ------------
     Size progress = 0;
     startProgress(0, partition_boundaries.size(), "linking features");
-    for (size_t j = 0; j < partition_boundaries.size()-1; j++)
+    for (size_t j = 0; j < partition_boundaries.size()-1; ++j)
     {
       double partition_start = partition_boundaries[j];
       double partition_end = partition_boundaries[j+1];
 
       std::vector<std::vector<BaseFeature*>> tmp_input_maps(input_maps.size());
-      for (size_t k = 0; k < input_maps.size(); k++)
+      for (size_t k = 0; k < input_maps.size(); ++k)
       {
         // iterate over all features in the current input map and append pointer of
         // matching features (within the current partition) to the temporary
         // map
-        for (size_t m = 0; m < input_maps[k].size(); m++)
+        for (size_t m = 0; m < input_maps[k].size(); ++m)
         {
           if (input_maps[k][m].getMZ() >= partition_start &&
               input_maps[k][m].getMZ() < partition_end)
