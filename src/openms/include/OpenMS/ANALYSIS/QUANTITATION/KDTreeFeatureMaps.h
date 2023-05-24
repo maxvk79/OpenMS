@@ -101,6 +101,29 @@ public:
   {
   }
 
+  /// Add @p maps and balance kd-tree
+  template <typename MapType>
+  void addMaps(const std::vector<MapType>& maps)
+  {
+    if(getFeatureDataType() == FEATURE_DATA_NON_CONST)
+    {
+      throw Exception::InternalToolError(__FILE__, __LINE__, OPENMS_PRETTY_FUNCTION,
+                                     "Cannot add maps with non-const data type. Use different c'tor (e.g. default).");
+    }
+    num_maps_ = maps.size();
+    for (Size i = 0; i < num_maps_; ++i)
+    {
+      const MapType& m = maps[i];
+      for (typename MapType::const_iterator it = m.begin(); it != m.end(); ++it)
+      {
+        addFeatureConst(i, &(*it));
+      }
+    }
+    optimizeTree();
+  }
+
+private:
+
   /// Add @p maps and balance kd-tree (non-const pointer variant)
   void addMapsNonConst(std::vector<std::vector<BaseFeature*>>& maps)
   {
@@ -132,28 +155,14 @@ public:
     }
     optimizeTree();
   }
-
-  /// Add @p maps and balance kd-tree
-  template <typename MapType>
-  void addMaps(const std::vector<MapType>& maps)
-  {
-    num_maps_ = maps.size();
-    for (Size i = 0; i < num_maps_; ++i)
-    {
-      const MapType& m = maps[i];
-      for (typename MapType::const_iterator it = m.begin(); it != m.end(); ++it)
-      {
-        addFeatureConst(i, &(*it));
-      }
-    }
-    optimizeTree();
-  }
-
+  
   /// Add feature (non-const pointer)
   void addFeatureNonConst(Size mt_map_index, BaseFeature* feature);
   
   /// Add feature (MapType template)
   void addFeatureConst(Size mt_map_index, const BaseFeature* feature);
+
+public:
 
   /// Return const pointer to feature i
   const BaseFeature* feature(Size i) const;

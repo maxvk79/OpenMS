@@ -71,6 +71,11 @@ const BaseFeature* KDTreeFeatureMaps::feature(Size i) const
 
 BaseFeature* KDTreeFeatureMaps::featureNonConst(Size i) const
 {
+  if(getFeatureDataType() == FEATURE_DATA_DEFAULT)
+  {
+    throw Exception::ElementNotFound(__FILE__, __LINE__, OPENMS_PRETTY_FUNCTION,
+                                     "Cannot return non-const pointer if data type is const. Use different c'tor.");
+  }
   return features_mutable_[i];
 }
 
