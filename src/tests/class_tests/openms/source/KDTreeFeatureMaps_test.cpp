@@ -65,6 +65,12 @@ fmap.push_back(f2);
 vector<FeatureMap> fmaps;
 fmaps.push_back(fmap);
 
+std::vector<std::vector<BaseFeature*>> fmaps2(1); 
+fmaps2[0].push_back(&f1);
+
+std::vector<std::vector<const BaseFeature*>> fmaps3(1); 
+fmaps3[0].push_back(&f1);
+
 Param p;
 p.setValue("rt_tol", 100);
 p.setValue("mz_tol", 10);
@@ -82,7 +88,7 @@ START_SECTION((virtual ~KDTreeFeatureMaps()))
   delete ptr;
 END_SECTION
 
-START_SECTION((KDTreeFeatureMaps(const std::vector<MapType>& maps, const Param& param)))
+START_SECTION((KDTreeFeatureMaps(std::vector<MapType>& maps, const Param& param)))
   ptr = new KDTreeFeatureMaps(fmaps, p);
   TEST_NOT_EQUAL(ptr, nullPointer);
   delete ptr;
@@ -123,13 +129,15 @@ START_SECTION((void addFeatureConst(Size mt_map_index, const BaseFeature* featur
   TEST_EQUAL(kd_data_3.size(), 3);
 END_SECTION
 
-// same wie oben
+
+KDTreeFeatureMaps kd_data_4; 
+
 START_SECTION((void addFeatureNonConst(Size mt_map_index, BaseFeature* feature)))
   Feature f4;
   f4.setMZ(300);
   f4.setRT(500);
-  kd_data_3.addFeatureNonConst(3, &f4);
-  TEST_EQUAL(kd_data_3.size(), 4);
+  kd_data_3.addFeatureNonConst(2, &f4);
+  TEST_EQUAL(kd_data_3.size(), );
 END_SECTION
 
 
