@@ -123,6 +123,16 @@ START_SECTION((void addFeatureConst(Size mt_map_index, const BaseFeature* featur
   TEST_EQUAL(kd_data_3.size(), 3);
 END_SECTION
 
+// same wie oben
+START_SECTION((void addFeatureNonConst(Size mt_map_index, BaseFeature* feature)))
+  Feature f4;
+  f4.setMZ(300);
+  f4.setRT(500);
+  kd_data_3.addFeatureNonConst(3, &f4);
+  TEST_EQUAL(kd_data_3.size(), 4);
+END_SECTION
+
+
 START_SECTION((const BaseFeature* feature(Size i) const))
   TEST_EQUAL(kd_data_1.feature(0), &(fmaps[0][0]))
   TEST_EQUAL(kd_data_1.feature(1), &(fmaps[0][1]))
@@ -155,7 +165,7 @@ END_SECTION
 
 START_SECTION((Size treeSize() const))
   TEST_EQUAL(kd_data_1.treeSize(), 2)
-  TEST_EQUAL(kd_data_3.treeSize(), 3)
+  TEST_EQUAL(kd_data_3.treeSize(), 4)  // changed from 3 to 4
 END_SECTION
 
 START_SECTION((Size numMaps() const))
@@ -182,6 +192,14 @@ END_SECTION
 
 START_SECTION((void applyTransformations(const std::vector<TransformationModelLowess*>& trafos)))
   NOT_TESTABLE;
+END_SECTION
+
+// weitere funktionen 
+
+START_SECTION(FeatureDataType getFeatureDataType() const)
+    FeatureDataType fdt_def = FEATURE_DATA_DEFAULT; 
+    FeatureDataType fdt_nc = FEATURE_DATA_NON_CONST; 
+    TEST_EQUAL(kd_data_1.feature(1), &(fmaps[0][1]))
 END_SECTION
 
 
