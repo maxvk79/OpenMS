@@ -65,7 +65,6 @@ fmap.push_back(f2);
 vector<FeatureMap> fmaps;
 fmaps.push_back(fmap);
 
-
 vector<BaseFeature*> fmap2;
 fmap2.push_back(&f1);
 fmap2.push_back(&f2);
@@ -79,7 +78,6 @@ fmap3.push_back(&f2);
 
 vector<vector<const BaseFeature*>> fmaps3;
 fmaps3.push_back(fmap3);
-
 
 Param p;
 p.setValue("rt_tol", 100);
@@ -144,20 +142,6 @@ START_SECTION((void addMaps(const std::vector<MapType>& maps)))
   TEST_EXCEPTION(Exception::InternalToolError,kd_data_4.addMaps(fmaps))
 END_SECTION
 
-
-/*
-// hatten wir die ausgenommen, weil Private?
-// adFeature -> addFeatureConst
-START_SECTION((void addFeatureConst(Size mt_map_index, const BaseFeature* feature)))
-  Feature f3;
-  f3.setMZ(300);
-  f3.setRT(500);
-  kd_data_3.addFeatureConst(2, &f3);
-  TEST_EQUAL(kd_data_3.size(), 3);
-*/
-
-
-
 START_SECTION((BaseFeature* featureNonConst(Size i) const))
   TEST_EQUAL(kd_data_4.feature(0), fmaps2[0][0])
   TEST_EQUAL(kd_data_4.feature(1), fmaps2[0][1])
@@ -165,23 +149,6 @@ START_SECTION((BaseFeature* featureNonConst(Size i) const))
   TEST_EQUAL(kd_data_4.featureNonConst(1), fmaps2[0][1])
   TEST_EXCEPTION(Exception::ElementNotFound,kd_data_1.featureNonConst(0))
 END_SECTION
-
-/*
-KDTreeFeatureMaps kd_data_4; 
-
-START_SECTION((void addFeatureNonConst(Size mt_map_index, BaseFeature* feature)))
-  Feature f4;
-  f4.setMZ(300);
-  f4.setRT(500);
-  kd_data_3.addFeatureNonConst(2, &f4);
-  TEST_EQUAL(kd_data_3.size(), );
-END_SECTION
-
- */
-
-
-
-
 
 START_SECTION((const BaseFeature* feature(Size i) const))
   TEST_EQUAL(kd_data_1.feature(0), &(fmaps[0][0]))
@@ -244,14 +211,12 @@ START_SECTION((void applyTransformations(const std::vector<TransformationModelLo
   NOT_TESTABLE;
 END_SECTION
 
-// weitere funktionen 
-
 START_SECTION(FeatureDataType getFeatureDataType() const)
-    FeatureDataType fdt_def = FEATURE_DATA_DEFAULT; 
-    FeatureDataType fdt_nc = FEATURE_DATA_NON_CONST; 
-    TEST_EQUAL(kd_data_1.feature(1), &(fmaps[0][1]))
+    KDTreeFeatureMaps::FeatureDataType fdt_def = KDTreeFeatureMaps::FeatureDataType::FEATURE_DATA_DEFAULT; 
+    KDTreeFeatureMaps::FeatureDataType fdt_nc = KDTreeFeatureMaps::FeatureDataType::FEATURE_DATA_NON_CONST; 
+    TEST_EQUAL(kd_data_1.getFeatureDataType(), fdt_def)
+    TEST_EQUAL(kd_data_4.getFeatureDataType(), fdt_nc)
 END_SECTION
-
 
 delete ptr;
 

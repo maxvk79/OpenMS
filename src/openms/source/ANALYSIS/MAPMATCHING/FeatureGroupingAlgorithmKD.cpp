@@ -267,9 +267,9 @@ namespace OpenMS
 
     for (size_t j = 0; j < partition_boundaries.size()-1; ++j)
     {
-
-
-  
+      double partition_start = partition_boundaries[j];
+      double partition_end = partition_boundaries[j+1];
+      
       // std::vector<std::vector<BaseFeature*>> tmp_input_maps = fill_tmp_input_map_partition(partition_boundaries, input_maps, j); 
 
       std::vector<std::vector<BaseFeature*>> tmp_input_maps(input_maps.size());
