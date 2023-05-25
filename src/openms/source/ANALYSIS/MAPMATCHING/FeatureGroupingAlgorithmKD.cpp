@@ -232,7 +232,7 @@ namespace OpenMS
     
     for (size_t j = 0; j < partition_boundaries.size()-1; j++)
     {
-      std::vector<MapType> tmp_input_maps = fill_tmp_input_map_partition(partition_boundaries, input_maps); 
+      std::vector<std::vecotor<BaseFeature*> tmp_input_maps = fill_tmp_input_map_partition(partition_boundaries, input_maps); 
 
       // set up kd-tree
       KDTreeFeatureMaps kd_data(tmp_input_maps, param_);
@@ -536,7 +536,7 @@ namespace OpenMS
   }
 
 
-
+  // Pointer Variante einbauen
   std::vector<MapType> fill_tmp_input_map_partition(const std::vector<double>& partition_boundaries, std::vector<MapType>& input_maps)
   {
     std::vector<MapType> tmp_input_maps(input_maps.size());
