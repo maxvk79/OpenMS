@@ -54,7 +54,9 @@ namespace OpenMS
 	 : public FeatureGroupingAlgorithm
 	{
 		public:
+
 			void group(vector< FeatureMap >&, ConsensusMap& map) override
+
 			{
 			  map.getColumnHeaders()[0].filename = "bla";
 				map.getColumnHeaders()[0].size = 5;
