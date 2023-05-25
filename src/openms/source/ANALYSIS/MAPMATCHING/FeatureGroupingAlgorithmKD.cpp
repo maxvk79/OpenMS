@@ -199,14 +199,14 @@ namespace OpenMS
     {
       Size progress = 0;
       startProgress(0, partition_boundaries.size(), "computing RT transformations");
-      //std::vector<int> all_partitions_rt;
+     
       for (size_t j = 0; j < partition_boundaries.size()-1; j++)
       {
         double partition_start = partition_boundaries[j];
         double partition_end = partition_boundaries[j+1];
 
         std::vector<std::vector<const BaseFeature*>> tmp_input_maps(input_maps.size());
-        //int partition_size = 0;  
+
         for (size_t k = 0; k < input_maps.size(); k++)
         {
           // iterate over all features in the current input map and append
@@ -218,18 +218,15 @@ namespace OpenMS
                 input_maps[k][m].getMZ() < partition_end)
             {
               tmp_input_maps[k].push_back(&(input_maps[k][m]));
-              //++partition_size; 
             }
           }
         }
-        //all_partitions_rt.push_back(partition_size); 
-        //std::cout << "RT Transssssform - members in this partition: "<< partition_size << endl; 
         // set up kd-tree
         KDTreeFeatureMaps kd_data(tmp_input_maps, param_);
         aligner.addRTFitData(kd_data);
         setProgress(progress++);
       }
-      //std::cout << "number of partitions is: " << all_partitions_rt.size() << endl; 
+
 
       // fit LOWESS on RT fit data collected across all partitions
       try
@@ -249,14 +246,12 @@ namespace OpenMS
     Size progress = 0;
     startProgress(0, partition_boundaries.size(), "linking features");
     
-    std::vector<std::pair<double, int>> all_partitions_linking; 
     for (size_t j = 0; j < partition_boundaries.size()-1; j++)
     {
       double partition_start = partition_boundaries[j];
       double partition_end = partition_boundaries[j+1];
 
       std::vector<std::vector<BaseFeature*>> tmp_input_maps(input_maps.size());
-      int partition_size = 0;
       for (size_t k = 0; k < input_maps.size(); k++)
       {
         // iterate over all features in the current input map and append pointer of
@@ -267,14 +262,10 @@ namespace OpenMS
           if (input_maps[k][m].getMZ() >= partition_start &&
               input_maps[k][m].getMZ() < partition_end)
           {
-            tmp_input_maps[k].push_back(&(input_maps[k][m]));
-            ++partition_size; 
+            tmp_input_maps[k].push_back(&(input_maps[k][m])); 
           }
         }
       }
-      //std::cout << "alignment + linking: members in this partition: "<< partition_size << endl; 
-      all_partitions_linking.push_back(std::make_pair(partition_end, partition_size)); 
-  
     
       // set up kd-tree
       KDTreeFeatureMaps kd_data(tmp_input_maps, param_);
@@ -291,27 +282,6 @@ namespace OpenMS
       setProgress(progress++);
     }
     endProgress();
-
-    std::cout << "number of partitions is: " << all_partitions_linking.size() << endl; 
-
-    {
-      std::filesystem::path filePath = "/buffer/ag_bsc/pmsb_23/max_vk/partition_SIZES.txt";
-      std::ofstream outputFile(filePath);
-      if (outputFile.is_open()) {
-          for (const auto& pair : all_partitions_linking) {
-              //double value1 = pair.first;
-              int value2 = pair.second;
-            //outputFile << value1 << " " << value2 << "\n";
-            outputFile << value2 << "\n";
-          }
-          outputFile.close();
-          std::cout << "Histogram data exported successfully.\n";
-      } else {
-          std::cerr << "Unable to open the output file.\n";
-      }
-    }
-    
-
     postprocess_(input_maps, out);
   }
 
