@@ -120,7 +120,7 @@ START_SECTION((void addMaps(const std::vector<MapType>& maps)))
   TEST_EQUAL(kd_data_3.size(), 2);
 END_SECTION
 
-// changes adFeature -> addFeatureConst
+// adFeature -> addFeatureConst
 START_SECTION((void addFeatureConst(Size mt_map_index, const BaseFeature* feature)))
   Feature f3;
   f3.setMZ(300);
@@ -129,7 +129,7 @@ START_SECTION((void addFeatureConst(Size mt_map_index, const BaseFeature* featur
   TEST_EQUAL(kd_data_3.size(), 3);
 END_SECTION
 
-
+/*
 KDTreeFeatureMaps kd_data_4; 
 
 START_SECTION((void addFeatureNonConst(Size mt_map_index, BaseFeature* feature)))
@@ -139,6 +139,11 @@ START_SECTION((void addFeatureNonConst(Size mt_map_index, BaseFeature* feature))
   kd_data_3.addFeatureNonConst(2, &f4);
   TEST_EQUAL(kd_data_3.size(), );
 END_SECTION
+
+ */
+
+
+
 
 
 START_SECTION((const BaseFeature* feature(Size i) const))

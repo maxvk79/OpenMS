@@ -275,8 +275,7 @@ namespace OpenMS
       //std::cout << "alignment + linking: members in this partition: "<< partition_size << endl; 
       all_partitions_linking.push_back(std::make_pair(partition_end, partition_size)); 
   
-      
-
+    
       // set up kd-tree
       KDTreeFeatureMaps kd_data(tmp_input_maps, param_);
 
