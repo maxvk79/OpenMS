@@ -481,11 +481,11 @@ END_SECTION
 START_SECTION((void insert_move(UInt64 map_index, BaseFeature& element)))
   ConsensusFeature cons2;
 
-  std::vector<PeptideIdentification> ids = tmp_feature4.getPeptideIdentifications();
-  TEST_EQUAL(ids.size(), 2)
+  //std::vector<PeptideIdentification> ids = tmp_feature4.getPeptideIdentifications();
+  TEST_EQUAL(tmp_feature4.getPeptideIdentifications().size(), 2)
 
   cons2.insert_move(2, tmp_feature4);
-  ids = tmp_feature4.getPeptideIdentifications(); 
+  //ids = tmp_feature4.getPeptideIdentifications(); 
 
   ConsensusFeature::HandleSetType::const_iterator it2 = cons2.begin();
   TEST_EQUAL(it2->getMapIndex(),2)
@@ -493,8 +493,8 @@ START_SECTION((void insert_move(UInt64 map_index, BaseFeature& element)))
   TEST_EQUAL(it2->getIntensity(),500)
   ++it2;
   TEST_EQUAL(it2==cons2.end(),true)
-  TEST_EQUAL(ids.size(), 0)
-  // TEST_EQUAL(ids.capacity(), 0) // test failed, capacity not 0!
+  TEST_EQUAL(tmp_feature4.getPeptideIdentifications().size(), 0)
+  TEST_EQUAL(tmp_feature4.getPeptideIdentifications().capacity(), 0) // test failed, capacity not 0!
 END_SECTION
 
 START_SECTION((void computeConsensus()))

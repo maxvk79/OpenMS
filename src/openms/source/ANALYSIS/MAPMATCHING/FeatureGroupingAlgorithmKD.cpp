@@ -206,15 +206,6 @@ namespace OpenMS
       Size progress = 0;
       startProgress(0, partition_boundaries.size(), "computing RT transformations");
 
-
-      /*
-      for (size_t j = 0; j < partition_boundaries.size()-1; ++j)
-      {
-        // sollte tmp_input_maps hier const sein? - muss nicht unbedingt 
-        std::vector<std::vector<BaseFeature*>> tmp_input_maps = fill_tmp_input_map_partition(partition_boundaries, input_maps, j); 
-      */
-
-      
       for (size_t j = 0; j < partition_boundaries.size()-1; ++j)
       {
         double partition_start = partition_boundaries[j];
@@ -242,7 +233,6 @@ namespace OpenMS
         setProgress(progress++);
       }
 
-
       // fit LOWESS on RT fit data collected across all partitions
       try
       {
@@ -262,15 +252,10 @@ namespace OpenMS
     Size progress = 0;
     startProgress(0, partition_boundaries.size(), "linking features");
 
-    
-
-
     for (size_t j = 0; j < partition_boundaries.size()-1; ++j)
     {
       double partition_start = partition_boundaries[j];
       double partition_end = partition_boundaries[j+1];
-      
-      // std::vector<std::vector<BaseFeature*>> tmp_input_maps = fill_tmp_input_map_partition(partition_boundaries, input_maps, j); 
 
       std::vector<std::vector<BaseFeature*>> tmp_input_maps(input_maps.size());
       for (size_t k = 0; k < input_maps.size(); ++k)
@@ -305,8 +290,7 @@ namespace OpenMS
     }
     endProgress();
     
-    postprocess_(input_maps, out); // das hier müsste weg, wenn die Input Maps hier nicht mehr leben
-
+    postprocess_(input_maps, out);
   }
 
   void FeatureGroupingAlgorithmKD::group(std::vector<FeatureMap>& maps,
@@ -583,35 +567,6 @@ namespace OpenMS
     cf.computeConsensus();
     out.push_back(cf);
   }
-
-  template <typename MapType>
-  std::vector<std::vector<BaseFeature*>> fill_tmp_input_map_partition (const vector<double> partition_boundaries, std::vector<MapType>& input_maps, const Size j) 
-  {
-    std::vector<std::vector<BaseFeature*>> tmp_input_maps(input_maps.size());
-    
-    double partition_start = partition_boundaries[j];
-    double partition_end = partition_boundaries[j+1];
-    
-    for (size_t k = 0; k < input_maps.size(); ++k)
-    {
-      // iterate over all features in the current input map and append
-      // matching features (within the current partition) to the temporary
-      // map
-      for (size_t m = 0; m < input_maps[k].size(); ++m)
-      {
-        if (input_maps[k][m].getMZ() >= partition_start &&   
-            input_maps[k][m].getMZ() < partition_end)       
-        {
-          tmp_input_maps[k].push_back(&(input_maps[k][m]));
-        }
-      }
-      //tmp_input_maps[k].updateRanges();
-    }
-    return tmp_input_maps; 
-  }
-
-  
-
 } // namespace OpenMS
 
 
