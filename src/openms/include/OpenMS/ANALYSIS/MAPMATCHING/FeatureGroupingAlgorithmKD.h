@@ -246,7 +246,8 @@ private:
     // Compute a temporary input_maps-partiotion
     std::vector<MapType> fill_tmp_input_map_partition (const vector<double> partition_boundaries; 
                                                       vector<MapType>& input_maps);
-                
+        
+    // Compute a temporary input_maps-partiotion    
     std::vector<vector<BaseFeature*>> fill_tmp_input_map_partition (const vector<double> partition_boundaries; 
                                                                    vector<vector<BaseFeature*>>& input_maps);
 
