@@ -540,15 +540,14 @@ namespace OpenMS
   }
 
 
-  // use Pointer version ???
 
+  // Pointer Variante einbauen!!!
   std::vector<MapType> fill_tmp_input_map_partition (const vector<double> partition_boundaries; vector<MapType>& input_maps) 
   {
     std::vector<MapType> tmp_input_maps(input_maps.size());
 
     double partition_start = partition_boundaries[j];
     double partition_end = partition_boundaries[j+1];
-
     
     for (size_t k = 0; k < input_maps.size(); k++)
     {
@@ -568,34 +567,8 @@ namespace OpenMS
     return tmp_input_maps; 
   }
 
-
-  // Pointer Variante einbauen
-  std::vector<MapType> fill_tmp_input_map_partition(const std::vector<double>& partition_boundaries, std::vector<MapType>& input_maps)
-  {
-    std::vector<MapType> tmp_input_maps(input_maps.size());
-
-    for (size_t j = 0; j < partition_boundaries.size() - 1; j++)
-    {
-      double partition_start = partition_boundaries[j];
-      double partition_end = partition_boundaries[j + 1];
-
-      for (size_t k = 0; k < input_maps.size(); k++)
-      {
-        for (auto it = std::make_move_iterator(input_maps[k].begin()); it != std::make_move_iterator(input_maps[k].end()); ++it)
-        {
-          if (it->getMZ() >= partition_start && it->getMZ() < partition_end)
-          {
-            tmp_input_maps[k].push_back(std::move(*it));
-          }
-        }
-        tmp_input_maps[k].updateRanges();
-      }
-    }
-    return tmp_input_maps;
-  }
-
-  // Pointer version einbauen
-  std::vector<std::vecotor<BaseFeature*> fill_tmp_input_map_partition(const std::vector<double>& partition_boundaries, std::vector<std::vecotor<BaseFeature*>& input_maps)
+  // Pointer Variante einbauen!!!!
+  std::vector<std::vecotor<BaseFeature*> fill_tmp_input_map_partition (const std::vector<double>& partition_boundaries, std::vector<std::vecotor<BaseFeature*>& input_maps)
   {
     std::vector<MapType> tmp_input_maps(input_maps.size());
 
@@ -621,3 +594,31 @@ namespace OpenMS
 
 
 } // namespace OpenMS
+
+
+/*
+ // move
+
+ std::vector<MapType> fill_tmp_input_map_partition(const std::vector<double>& partition_boundaries, std::vector<MapType>& input_maps)
+  {
+    std::vector<MapType> tmp_input_maps(input_maps.size());
+
+    double partition_start = partition_boundaries[j];
+    double partition_end = partition_boundaries[j + 1];
+
+    for (size_t k = 0; k < input_maps.size(); k++)
+    {
+      for (auto it = std::make_move_iterator(input_maps[k].begin()); it != std::make_move_iterator(input_maps[k].end()); ++it)
+      {
+        if (it->getMZ() >= partition_start && 
+            it->getMZ() < partition_end)
+        {
+          tmp_input_maps[k].push_back(std::move(*it));
+        }
+      }
+      tmp_input_maps[k].updateRanges();
+    }
+    return tmp_input_maps;
+  } 
+
+ */
