@@ -250,8 +250,10 @@ private:
     */
   
     // Compute a temporary input_maps-partiotion    
-    std::vector<std::vector<BaseFeature*>> fill_tmp_input_map_partition (const vector<double> partition_boundaries; 
-                                                                        vector<MapType>&& input_maps);
+    template <typename MapType>
+    std::vector<std::vector<BaseFeature*>> fill_tmp_input_map_partition (const std::vector<double> partition_boundaries,
+                                                                         std::vector<MapType>& input_maps,
+                                                                         const Size map_index);
 
 
     /// Current progress for logging

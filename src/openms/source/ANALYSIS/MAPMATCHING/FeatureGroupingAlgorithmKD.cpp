@@ -207,12 +207,10 @@ namespace OpenMS
       startProgress(0, partition_boundaries.size(), "computing RT transformations");
 
       
-      for (size_t j = 0; j < partition_boundaries.size()-1; j++)
+      for (size_t j = 0; j < partition_boundaries.size()-1; ++j)
       {
-        // Partitionen an dieser stelle überhaput notwendig / sinnvoll? 
-        // sollte tmp_input_maps hier const sein? 
-        // kein MapType? 
-        std::vector<std::vector<BaseFeature*>> tmp_input_maps = fill_tmp_input_map_partition(partition_boundaries, input_maps); 
+        // sollte tmp_input_maps hier const sein? - muss nicht unbedingt 
+        std::vector<std::vector<BaseFeature*>> tmp_input_maps = fill_tmp_input_map_partition(partition_boundaries, input_maps, j); 
 
         // set up kd-tree
         KDTreeFeatureMaps kd_data(tmp_input_maps, param_);
@@ -240,10 +238,10 @@ namespace OpenMS
     Size progress = 0;
     startProgress(0, partition_boundaries.size(), "linking features");
     
-    for (size_t j = 0; j < partition_boundaries.size()-1; j++)
+    for (size_t j = 0; j < partition_boundaries.size()-1; ++j)
     {
 
-      std::vector<std::vecotor<BaseFeature*> tmp_input_maps = fill_tmp_input_map_partition(partition_boundaries, input_maps); 
+      std::vector<std::vector<BaseFeature*>> tmp_input_maps = fill_tmp_input_map_partition(partition_boundaries, input_maps, j); 
 
       // set up kd-tree
       KDTreeFeatureMaps kd_data(tmp_input_maps, param_);
@@ -540,29 +538,28 @@ namespace OpenMS
     out.push_back(cf);
   }
 
-
-  // Pointer Variante einbauen!!!
-  std::vector<std::vector<BaseFeature*>> fill_tmp_input_map_partition (const vector<double> partition_boundaries; vector<MapType>& input_maps) 
+  template <typename MapType>
+  std::vector<std::vector<BaseFeature*>> fill_tmp_input_map_partition (const vector<double> partition_boundaries, std::vector<MapType>& input_maps, const Size j) 
   {
     std::vector<std::vector<BaseFeature*>> tmp_input_maps(input_maps.size());
     
     double partition_start = partition_boundaries[j];
     double partition_end = partition_boundaries[j+1];
     
-    for (size_t k = 0; k < input_maps.size(); k++)
+    for (size_t k = 0; k < input_maps.size(); ++k)
     {
       // iterate over all features in the current input map and append
       // matching features (within the current partition) to the temporary
       // map
-      for (size_t m = 0; m < input_maps[k].size(); m++)
+      for (size_t m = 0; m < input_maps[k].size(); ++m)
       {
         if (input_maps[k][m].getMZ() >= partition_start &&   
             input_maps[k][m].getMZ() < partition_end)       
         {
-          tmp_input_maps[k].push_back(input_maps[k][m]);
+          tmp_input_maps[k].push_back(&(input_maps[k][m]));
         }
       }
-      tmp_input_maps[k].updateRanges();
+      //tmp_input_maps[k].updateRanges();
     }
     return tmp_input_maps; 
   }
