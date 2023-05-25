@@ -121,7 +121,7 @@ private:
     ///Assignment operator is not implemented -> private
     FeatureGroupingAlgorithm & operator=(const FeatureGroupingAlgorithm &);
 
-
+ 
 
   };
 

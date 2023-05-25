@@ -32,6 +32,7 @@
 // $Authors: Johannes Veit $
 // --------------------------------------------------------------------------
 
+
 #include <OpenMS/ANALYSIS/MAPMATCHING/FeatureGroupingAlgorithmKD.h>
 #include <OpenMS/ANALYSIS/MAPMATCHING/MapAlignmentAlgorithmKD.h>
 #include <OpenMS/ANALYSIS/MAPMATCHING/FeatureGroupingAlgorithm.h>
@@ -115,6 +116,7 @@ namespace OpenMS
   FeatureGroupingAlgorithmKD::~FeatureGroupingAlgorithmKD() = default;
 
   template <typename MapType>
+
   void FeatureGroupingAlgorithmKD::group_(vector<MapType>& input_maps,
                                           ConsensusMap& out)
   {
@@ -165,14 +167,18 @@ namespace OpenMS
     // partition at boundaries -> this should be safe because there cannot be
     // any cluster reaching across boundaries
 
+
+    // Really? YES, because of mz tolerance
+    // disjunkte Partiotionen
+
     sort(massrange.begin(), massrange.end());
     int pts_per_partition = massrange.size() / (int)(param_.getValue("nr_partitions"));
 
     double warp_mz_tol = (double)(param_.getValue("warp:mz_tol"));
     double max_mz_tol = max(mz_tol_, warp_mz_tol);
 
-    // compute partition boundaries
-    vector<double> partition_boundaries;
+    // compute partition boundaries 
+    vector<double> partition_boundaries;  
     partition_boundaries.push_back(massrange.front());
     for (size_t j = 0; j < massrange.size()-1; j++)
     {
@@ -199,28 +205,14 @@ namespace OpenMS
     {
       Size progress = 0;
       startProgress(0, partition_boundaries.size(), "computing RT transformations");
-     
+
+      
       for (size_t j = 0; j < partition_boundaries.size()-1; j++)
       {
-        double partition_start = partition_boundaries[j];
-        double partition_end = partition_boundaries[j+1];
+        // Partitionen an dieser stelle überhaput notwendig / sinnvoll? 
+        std::vector<MapType> tmp_input_maps = fill_tmp_input_map_partition(partition_boundaries, input_maps); 
 
-        std::vector<std::vector<const BaseFeature*>> tmp_input_maps(input_maps.size());
 
-        for (size_t k = 0; k < input_maps.size(); k++)
-        {
-          // iterate over all features in the current input map and append
-          // matching features (within the current partition) to the temporary
-          // map
-          for (size_t m = 0; m < input_maps[k].size(); m++)
-          {
-            if (input_maps[k][m].getMZ() >= partition_start &&
-                input_maps[k][m].getMZ() < partition_end)
-            {
-              tmp_input_maps[k].push_back(&(input_maps[k][m]));
-            }
-          }
-        }
         // set up kd-tree
         KDTreeFeatureMaps kd_data(tmp_input_maps, param_);
         aligner.addRTFitData(kd_data);
@@ -243,30 +235,15 @@ namespace OpenMS
     }
 
     // ------------ run alignment + feature linking on individual partitions ------------
+
     Size progress = 0;
     startProgress(0, partition_boundaries.size(), "linking features");
     
     for (size_t j = 0; j < partition_boundaries.size()-1; j++)
     {
-      double partition_start = partition_boundaries[j];
-      double partition_end = partition_boundaries[j+1];
 
-      std::vector<std::vector<BaseFeature*>> tmp_input_maps(input_maps.size());
-      for (size_t k = 0; k < input_maps.size(); k++)
-      {
-        // iterate over all features in the current input map and append pointer of
-        // matching features (within the current partition) to the temporary
-        // map
-        for (size_t m = 0; m < input_maps[k].size(); m++)
-        {
-          if (input_maps[k][m].getMZ() >= partition_start &&
-              input_maps[k][m].getMZ() < partition_end)
-          {
-            tmp_input_maps[k].push_back(&(input_maps[k][m])); 
-          }
-        }
-      }
-    
+      std::vector<std::vecotor<BaseFeature*> tmp_input_maps = fill_tmp_input_map_partition(partition_boundaries, input_maps); 
+
       // set up kd-tree
       KDTreeFeatureMaps kd_data(tmp_input_maps, param_);
 
@@ -282,7 +259,9 @@ namespace OpenMS
       setProgress(progress++);
     }
     endProgress();
-    postprocess_(input_maps, out);
+    
+    postprocess_(input_maps, out); // das hier müsste weg, wenn die Input Maps hier nicht mehr leben
+
   }
 
   void FeatureGroupingAlgorithmKD::group(std::vector<FeatureMap>& maps,
@@ -560,4 +539,87 @@ namespace OpenMS
     out.push_back(cf);
   }
 
+
+  // use Pointer version ???
+
+  std::vector<MapType> fill_tmp_input_map_partition (const vector<double> partition_boundaries; vector<MapType>& input_maps) 
+  {
+    std::vector<MapType> tmp_input_maps(input_maps.size());
+
+    double partition_start = partition_boundaries[j];
+    double partition_end = partition_boundaries[j+1];
+
+    
+    for (size_t k = 0; k < input_maps.size(); k++)
+    {
+      // iterate over all features in the current input map and append
+      // matching features (within the current partition) to the temporary
+      // map
+      for (size_t m = 0; m < input_maps[k].size(); m++)
+      {
+        if (input_maps[k][m].getMZ() >= partition_start &&   // overlap: + 2*max_mz_tol
+            input_maps[k][m].getMZ() < partition_end)        // overlap: - 2*max_mz_tol
+        {
+          tmp_input_maps[k].push_back(input_maps[k][m]);
+        }
+      }
+      tmp_input_maps[k].updateRanges();
+    }
+    return tmp_input_maps; 
+  }
+
+
+  // Pointer Variante einbauen
+  std::vector<MapType> fill_tmp_input_map_partition(const std::vector<double>& partition_boundaries, std::vector<MapType>& input_maps)
+  {
+    std::vector<MapType> tmp_input_maps(input_maps.size());
+
+    for (size_t j = 0; j < partition_boundaries.size() - 1; j++)
+    {
+      double partition_start = partition_boundaries[j];
+      double partition_end = partition_boundaries[j + 1];
+
+      for (size_t k = 0; k < input_maps.size(); k++)
+      {
+        for (auto it = std::make_move_iterator(input_maps[k].begin()); it != std::make_move_iterator(input_maps[k].end()); ++it)
+        {
+          if (it->getMZ() >= partition_start && it->getMZ() < partition_end)
+          {
+            tmp_input_maps[k].push_back(std::move(*it));
+          }
+        }
+        tmp_input_maps[k].updateRanges();
+      }
+    }
+    return tmp_input_maps;
+  }
+
+  // Pointer version einbauen
+  std::vector<std::vecotor<BaseFeature*> fill_tmp_input_map_partition(const std::vector<double>& partition_boundaries, std::vector<std::vecotor<BaseFeature*>& input_maps)
+  {
+    std::vector<MapType> tmp_input_maps(input_maps.size());
+
+    for (size_t j = 0; j < partition_boundaries.size() - 1; j++)
+    {
+      double partition_start = partition_boundaries[j];
+      double partition_end = partition_boundaries[j + 1];
+
+      for (size_t k = 0; k < input_maps.size(); k++)
+      {
+        for (auto it = std::make_move_iterator(input_maps[k].begin()); it != std::make_move_iterator(input_maps[k].end()); ++it)
+        {
+          if (it->getMZ() >= partition_start && it->getMZ() < partition_end)
+          {
+            tmp_input_maps[k].push_back(std::move(*it));
+          }
+        }
+        tmp_input_maps[k].updateRanges();
+      }
+    }
+    return tmp_input_maps;
+  }
+
+
 } // namespace OpenMS
+
+
