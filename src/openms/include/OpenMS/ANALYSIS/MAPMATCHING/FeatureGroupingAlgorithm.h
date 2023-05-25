@@ -32,6 +32,8 @@
 // $Authors: Marc Sturm, Clemens Groepl, Chris Bielow $
 // --------------------------------------------------------------------------
 
+// Funny Comment
+
 #pragma once
 
 #include <OpenMS/DATASTRUCTURES/DefaultParamHandler.h>
