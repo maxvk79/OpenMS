@@ -567,30 +567,34 @@ namespace OpenMS
     return tmp_input_maps; 
   }
 
-  // Pointer Variante einbauen!!!!
-  std::vector<std::vecotor<BaseFeature*> fill_tmp_input_map_partition (const std::vector<double>& partition_boundaries, std::vector<std::vecotor<BaseFeature*>& input_maps)
+  // Pointer Variante einbauen!!!
+  std::vector<std::vector<BaseFeature*>> fill_tmp_input_map_partition (const vector<double> partition_boundaries; vector<MapType>& input_maps) 
   {
     std::vector<MapType> tmp_input_maps(input_maps.size());
 
-    for (size_t j = 0; j < partition_boundaries.size() - 1; j++)
+    double partition_start = partition_boundaries[j];
+    double partition_end = partition_boundaries[j+1];
+    
+    for (size_t k = 0; k < input_maps.size(); k++)
     {
-      double partition_start = partition_boundaries[j];
-      double partition_end = partition_boundaries[j + 1];
-
-      for (size_t k = 0; k < input_maps.size(); k++)
+      // iterate over all features in the current input map and append
+      // matching features (within the current partition) to the temporary
+      // map
+      for (size_t m = 0; m < input_maps[k].size(); m++)
       {
-        for (auto it = std::make_move_iterator(input_maps[k].begin()); it != std::make_move_iterator(input_maps[k].end()); ++it)
+        if (input_maps[k][m].getMZ() >= partition_start &&   // overlap: + 2*max_mz_tol
+            input_maps[k][m].getMZ() < partition_end)        // overlap: - 2*max_mz_tol
         {
-          if (it->getMZ() >= partition_start && it->getMZ() < partition_end)
-          {
-            tmp_input_maps[k].push_back(std::move(*it));
-          }
+          tmp_input_maps[k].push_back(input_maps[k][m]);
         }
-        tmp_input_maps[k].updateRanges();
       }
+      tmp_input_maps[k].updateRanges();
     }
-    return tmp_input_maps;
+    return tmp_input_maps; 
   }
+
+  
+
 
 
 } // namespace OpenMS
