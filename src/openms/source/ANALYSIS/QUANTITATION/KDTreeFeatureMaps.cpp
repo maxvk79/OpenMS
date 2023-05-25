@@ -40,7 +40,17 @@ using namespace std;
 namespace OpenMS
 {
 
-void KDTreeFeatureMaps::addFeature(Size mt_map_index, const BaseFeature* feature)
+void KDTreeFeatureMaps::addFeatureNonConst(Size mt_map_index, BaseFeature* feature)
+{
+  map_index_.push_back(mt_map_index);
+  features_mutable_.push_back(feature);
+  rt_.push_back(feature->getRT());
+  
+  KDTreeFeatureNode mt_node(this, size() - 1);
+  kd_tree_.insert(mt_node);
+}
+
+void KDTreeFeatureMaps::addFeatureConst(Size mt_map_index, const BaseFeature* feature)
 {
   map_index_.push_back(mt_map_index);
   features_.push_back(feature);
@@ -52,7 +62,16 @@ void KDTreeFeatureMaps::addFeature(Size mt_map_index, const BaseFeature* feature
 
 const BaseFeature* KDTreeFeatureMaps::feature(Size i) const
 {
-  return features_[i];
+  if (getFeatureDataType() == FEATURE_DATA_DEFAULT)
+  {
+    return features_[i];
+  }
+  return features_mutable_[i];
+}
+
+BaseFeature* KDTreeFeatureMaps::featureNonConst(Size i) const
+{
+  return features_mutable_[i];
 }
 
 double KDTreeFeatureMaps::rt(Size i) const
@@ -62,17 +81,29 @@ double KDTreeFeatureMaps::rt(Size i) const
 
 double KDTreeFeatureMaps::mz(Size i) const
 {
-  return features_[i]->getMZ();
+  if (getFeatureDataType() == FEATURE_DATA_DEFAULT)
+  {
+    return features_[i]->getMZ();
+  }
+  return features_mutable_[i]->getMZ();
 }
 
 float KDTreeFeatureMaps::intensity(Size i) const
 {
-  return features_[i]->getIntensity();
+  if (getFeatureDataType() == FEATURE_DATA_DEFAULT)
+  {
+    return features_[i]->getIntensity();
+  }
+  return features_mutable_[i]->getIntensity();
 }
 
 Int KDTreeFeatureMaps::charge(Size i) const
 {
-  return features_[i]->getCharge();
+  if (getFeatureDataType() == FEATURE_DATA_DEFAULT)
+  {
+    return features_[i]->getCharge();
+  }
+  return features_mutable_[i]->getCharge();
 }
 
 Size KDTreeFeatureMaps::mapIndex(Size i) const
@@ -82,7 +113,11 @@ Size KDTreeFeatureMaps::mapIndex(Size i) const
 
 Size KDTreeFeatureMaps::size() const
 {
-  return features_.size();
+  if (getFeatureDataType() == FEATURE_DATA_DEFAULT)
+  {
+    return features_.size();
+  }
+  return features_mutable_.size();
 }
 
 Size KDTreeFeatureMaps::treeSize() const
@@ -98,6 +133,7 @@ Size KDTreeFeatureMaps::numMaps() const
 void KDTreeFeatureMaps::clear()
 {
   features_.clear();
+  features_mutable_.clear();
   map_index_.clear();
   kd_tree_.clear();
 }
@@ -122,11 +158,31 @@ void KDTreeFeatureMaps::getNeighborhood(Size index, vector<Size>& result_indices
   }
   else // max log fold change check enabled
   {
-    double int_1 = features_[index]->getIntensity();
+    if(feature_data_type_ == FEATURE_DATA_DEFAULT)
+    {
+      double int_1 = features_[index]->getIntensity();
+
+      for (vector<Size>::const_iterator it = tmp_result.begin(); it != tmp_result.end(); ++it)
+      {
+        double int_2 = features_[*it]->getIntensity();
+        double abs_log_fc = fabs(log10(int_2 / int_1));
+
+        // abs_log_fc could assume +nan or +inf if negative
+        // or zero intensity features were present, but
+        // this shouldn't cause a problem. they just wouldn't
+        // be used.
+        if (abs_log_fc <= max_pairwise_log_fc)
+        {
+          result_indices.push_back(*it);
+        }
+      }
+      return;
+    }
+    double int_1 = features_mutable_[index]->getIntensity();
 
     for (vector<Size>::const_iterator it = tmp_result.begin(); it != tmp_result.end(); ++it)
     {
-      double int_2 = features_[*it]->getIntensity();
+      double int_2 = features_mutable_[*it]->getIntensity();
       double abs_log_fc = fabs(log10(int_2 / int_1));
 
       // abs_log_fc could assume +nan or +inf if negative
@@ -138,6 +194,7 @@ void KDTreeFeatureMaps::getNeighborhood(Size index, vector<Size>& result_indices
         result_indices.push_back(*it);
       }
     }
+    return;
   }
 }
 
@@ -168,10 +225,27 @@ void KDTreeFeatureMaps::queryRegion(double rt_low, double rt_high, double mz_low
 
 void KDTreeFeatureMaps::applyTransformations(const vector<TransformationModelLowess*>& trafos)
 {
-  for (Size i = 0; i < size(); ++i)
+  if(feature_data_type_ == FEATURE_DATA_DEFAULT)
   {
-    rt_[i] = trafos[map_index_[i]]->evaluate(features_[i]->getRT());
+    for (Size i = 0; i < size(); ++i)
+    {
+      rt_[i] = trafos[map_index_[i]]->evaluate(features_[i]->getRT());
+    }
+    return; 
   }
+  else
+  {
+    for (Size i = 0; i < size(); ++i)
+    {
+      rt_[i] = trafos[map_index_[i]]->evaluate(features_mutable_[i]->getRT());
+    }
+    return; 
+  }
+}
+
+KDTreeFeatureMaps::FeatureDataType KDTreeFeatureMaps::getFeatureDataType() const
+{
+  return feature_data_type_;
 }
 
 void KDTreeFeatureMaps::updateMembers_()
