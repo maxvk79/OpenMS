@@ -243,13 +243,15 @@ private:
     /// Construct consensus feature and add to out map
     void addConsensusFeature_(const std::vector<Size>& indices, const KDTreeFeatureMaps& kd_data, ConsensusMap& out) const;
 
+    /*
     // Compute a temporary input_maps-partiotion
     std::vector<MapType> fill_tmp_input_map_partition (const vector<double> partition_boundaries; 
                                                       vector<MapType>& input_maps);
-        
+    */
+  
     // Compute a temporary input_maps-partiotion    
     std::vector<std::vector<BaseFeature*>> fill_tmp_input_map_partition (const vector<double> partition_boundaries; 
-                                                                   vector<MapType>&& input_maps);
+                                                                        vector<MapType>&& input_maps);
 
 
     /// Current progress for logging
