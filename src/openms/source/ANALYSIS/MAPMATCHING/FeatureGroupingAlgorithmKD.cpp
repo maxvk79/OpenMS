@@ -556,8 +556,8 @@ namespace OpenMS
       // map
       for (size_t m = 0; m < input_maps[k].size(); m++)
       {
-        if (input_maps[k][m].getMZ() >= partition_start &&   // overlap: + 2*max_mz_tol
-            input_maps[k][m].getMZ() < partition_end)        // overlap: - 2*max_mz_tol
+        if (input_maps[k][m].getMZ() >= partition_start &&   
+            input_maps[k][m].getMZ() < partition_end)       
         {
           tmp_input_maps[k].push_back(input_maps[k][m]);
         }
