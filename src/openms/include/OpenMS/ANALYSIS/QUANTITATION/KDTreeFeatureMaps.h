@@ -54,29 +54,23 @@ public:
   /// 2D tree on features
   typedef KDTree::KDTree<2,KDTreeFeatureNode> FeatureKDTree;
 
-  /// Type of feature data (non-const pointer, none/default)
-  enum FeatureDataType
-  {
-    FEATURE_DATA_NON_CONST,
-    FEATURE_DATA_DEFAULT
-  };
-
   /// Default constructor
   KDTreeFeatureMaps() :
-    DefaultParamHandler("KDTreeFeatureMaps"), feature_data_type_(FEATURE_DATA_DEFAULT)
+    DefaultParamHandler("KDTreeFeatureMaps")
   {
     check_defaults_ = false;
   }
 
-  /// Constructor (non-const input maps variant)
+  /// Constructor 
   KDTreeFeatureMaps(std::vector<std::vector<BaseFeature*>>& maps, const Param& param) :
-    DefaultParamHandler("KDTreeFeatureMaps"), feature_data_type_(FEATURE_DATA_NON_CONST)
+    DefaultParamHandler("KDTreeFeatureMaps")
   {
     check_defaults_ = false;
     setParameters(param);
-    addMapsNonConst(maps);
+    addMaps(maps);
   }
   
+  /*
   /// Constructor (const input maps variant)
   KDTreeFeatureMaps(std::vector<std::vector<const BaseFeature*>>& maps, const Param& param) :
     DefaultParamHandler("KDTreeFeatureMaps"), feature_data_type_(FEATURE_DATA_DEFAULT)
@@ -95,6 +89,7 @@ public:
     setParameters(param);
     addMaps(maps);
   }
+  */
 
   /// Destructor
   ~KDTreeFeatureMaps() override
@@ -102,30 +97,7 @@ public:
   }
 
   /// Add @p maps and balance kd-tree
-  template <typename MapType>
-  void addMaps(const std::vector<MapType>& maps)
-  {
-    if(getFeatureDataType() == FEATURE_DATA_NON_CONST)
-    {
-      throw Exception::InternalToolError(__FILE__, __LINE__, OPENMS_PRETTY_FUNCTION,
-                                     "Cannot add maps with non-const data type. Use different c'tor (e.g. default).");
-    }
-    num_maps_ = maps.size();
-    for (Size i = 0; i < num_maps_; ++i)
-    {
-      const MapType& m = maps[i];
-      for (typename MapType::const_iterator it = m.begin(); it != m.end(); ++it)
-      {
-        addFeatureConst(i, &(*it));
-      }
-    }
-    optimizeTree();
-  }
-
-private:
-
-  /// Add @p maps and balance kd-tree (non-const pointer variant)
-  void addMapsNonConst(std::vector<std::vector<BaseFeature*>>& maps)
+  void addMaps(std::vector<std::vector<BaseFeature*>>& maps)
   {
     num_maps_ = maps.size();
 
@@ -134,41 +106,17 @@ private:
       std::vector<BaseFeature*>& m = maps[i];
       for (BaseFeature* basefeature_ptr : m)
       {
-        addFeatureNonConst(i, basefeature_ptr);
-      }
-    }
-    optimizeTree();
-  }
-
-  /// Add @p maps and balance kd-tree (const pointer variant)
-  void addMapsConst(std::vector<std::vector<const BaseFeature*>>& maps)
-  {
-    num_maps_ = maps.size();
-
-    for (Size i = 0; i < num_maps_; ++i)
-    {
-      std::vector<const BaseFeature*>& m = maps[i];
-      for (const BaseFeature* basefeature_ptr : m)
-      {
-        addFeatureConst(i, basefeature_ptr);
+        addFeature(i, basefeature_ptr);
       }
     }
     optimizeTree();
   }
   
-  /// Add feature (non-const pointer)
-  void addFeatureNonConst(Size mt_map_index, BaseFeature* feature);
-  
-  /// Add feature (MapType template)
-  void addFeatureConst(Size mt_map_index, const BaseFeature* feature);
-
-public:
-
-  /// Return const pointer to feature i
-  const BaseFeature* feature(Size i) const;
+  /// Add feature
+  void addFeature(Size mt_map_index, BaseFeature* feature);
 
   /// Return non-const pointer to feature i
-  BaseFeature* featureNonConst(Size i) const;
+  BaseFeature* feature(Size i) const;
 
   /// RT
   double rt(Size i) const;
@@ -209,18 +157,12 @@ public:
   /// Apply RT transformations
   void applyTransformations(const std::vector<TransformationModelLowess*>& trafos);
 
-  /// Get type of feature data
-  FeatureDataType getFeatureDataType() const;
-
 protected:
 
   void updateMembers_() override;
 
   /// const feature data
-  std::vector<const BaseFeature*> features_;
-
-  /// non-const feature data
-  std::vector<BaseFeature*> features_mutable_;
+  std::vector<BaseFeature*> features_;
 
   /// Map indices
   std::vector<Size> map_index_;
@@ -233,9 +175,6 @@ protected:
 
   /// 2D tree on features from all input maps.
   FeatureKDTree kd_tree_;
-
-  /// Type of feature data
-  const FeatureDataType feature_data_type_;
 };
 }
 
