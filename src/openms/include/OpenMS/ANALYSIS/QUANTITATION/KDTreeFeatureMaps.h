@@ -61,15 +61,35 @@ public:
     check_defaults_ = false;
   }
 
-  /// Constructor
-  template <typename MapType>
-  KDTreeFeatureMaps(const std::vector<MapType>& maps, const Param& param) :
+  /// Constructor 
+  KDTreeFeatureMaps(std::vector<std::vector<BaseFeature*>>& maps, const Param& param) :
     DefaultParamHandler("KDTreeFeatureMaps")
   {
     check_defaults_ = false;
     setParameters(param);
     addMaps(maps);
   }
+  
+  /*
+  /// Constructor (const input maps variant)
+  KDTreeFeatureMaps(std::vector<std::vector<const BaseFeature*>>& maps, const Param& param) :
+    DefaultParamHandler("KDTreeFeatureMaps"), feature_data_type_(FEATURE_DATA_DEFAULT)
+  {
+    check_defaults_ = false;
+    setParameters(param);
+    addMapsConst(maps);
+  }
+
+  /// Constructor (MapType template)
+  template <typename MapType>
+  KDTreeFeatureMaps(const std::vector<MapType>& maps, const Param& param) :
+    DefaultParamHandler("KDTreeFeatureMaps"), feature_data_type_(FEATURE_DATA_DEFAULT)
+  {
+    check_defaults_ = false;
+    setParameters(param);
+    addMaps(maps);
+  }
+  */
 
   /// Destructor
   ~KDTreeFeatureMaps() override
@@ -77,27 +97,26 @@ public:
   }
 
   /// Add @p maps and balance kd-tree
-  template <typename MapType>
-  void addMaps(const std::vector<MapType>& maps)
+  void addMaps(std::vector<std::vector<BaseFeature*>>& maps)
   {
     num_maps_ = maps.size();
 
     for (Size i = 0; i < num_maps_; ++i)
     {
-      const MapType& m = maps[i];
-      for (typename MapType::const_iterator it = m.begin(); it != m.end(); ++it)
+      std::vector<BaseFeature*>& m = maps[i];
+      for (BaseFeature* basefeature_ptr : m)
       {
-        addFeature(i, &(*it));
+        addFeature(i, basefeature_ptr);
       }
     }
     optimizeTree();
   }
-
+  
   /// Add feature
-  void addFeature(Size mt_map_index, const BaseFeature* feature);
+  void addFeature(Size mt_map_index, BaseFeature* feature);
 
-  /// Return pointer to feature i
-  const BaseFeature* feature(Size i) const;
+  /// Return non-const pointer to feature i
+  BaseFeature* feature(Size i) const;
 
   /// RT
   double rt(Size i) const;
@@ -142,8 +161,8 @@ protected:
 
   void updateMembers_() override;
 
-  /// Feature data
-  std::vector<const BaseFeature*> features_;
+  /// const feature data
+  std::vector<BaseFeature*> features_;
 
   /// Map indices
   std::vector<Size> map_index_;
@@ -156,7 +175,6 @@ protected:
 
   /// 2D tree on features from all input maps.
   FeatureKDTree kd_tree_;
-
 };
 }
 
