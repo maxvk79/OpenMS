@@ -32,6 +32,7 @@
 // $Authors: Johannes Veit $
 // --------------------------------------------------------------------------
 
+
 #include <OpenMS/ANALYSIS/MAPMATCHING/FeatureGroupingAlgorithmKD.h>
 #include <OpenMS/ANALYSIS/MAPMATCHING/MapAlignmentAlgorithmKD.h>
 #include <OpenMS/ANALYSIS/MAPMATCHING/FeatureGroupingAlgorithm.h>
@@ -41,6 +42,10 @@
 #include <OpenMS/CONCEPT/LogStream.h>
 #include <OpenMS/METADATA/ProteinIdentification.h>
 #include <OpenMS/METADATA/PeptideIdentification.h>
+
+#include <fstream>
+#include <filesystem>
+#include <utility>
 
 using namespace std;
 
@@ -111,7 +116,8 @@ namespace OpenMS
   FeatureGroupingAlgorithmKD::~FeatureGroupingAlgorithmKD() = default;
 
   template <typename MapType>
-  void FeatureGroupingAlgorithmKD::group_(const vector<MapType>& input_maps,
+
+  void FeatureGroupingAlgorithmKD::group_(vector<MapType>& input_maps,
                                           ConsensusMap& out)
   {
     // set parameters
@@ -136,7 +142,7 @@ namespace OpenMS
          map_it != input_maps.end(); ++map_it)
     {
       for (typename MapType::const_iterator feat_it = map_it->begin();
-          feat_it != map_it->end(); feat_it++)
+          feat_it != map_it->end(); ++feat_it)
       {
         massrange.push_back(feat_it->getMZ());
         double inty = feat_it->getIntensity();
@@ -161,16 +167,20 @@ namespace OpenMS
     // partition at boundaries -> this should be safe because there cannot be
     // any cluster reaching across boundaries
 
+
+    // Really? YES, because of mz tolerance
+    // disjunkte Partiotionen
+
     sort(massrange.begin(), massrange.end());
     int pts_per_partition = massrange.size() / (int)(param_.getValue("nr_partitions"));
 
     double warp_mz_tol = (double)(param_.getValue("warp:mz_tol"));
     double max_mz_tol = max(mz_tol_, warp_mz_tol);
 
-    // compute partition boundaries
-    vector<double> partition_boundaries;
+    // compute partition boundaries 
+    vector<double> partition_boundaries;  
     partition_boundaries.push_back(massrange.front());
-    for (size_t j = 0; j < massrange.size()-1; j++)
+    for (size_t j = 0; j < massrange.size()-1; ++j)
     {
       // minimal differences between two m/z values
       double massrange_diff = mz_ppm_ ? max_mz_tol * 1e-6 * massrange[j+1] : max_mz_tol;
@@ -186,6 +196,7 @@ namespace OpenMS
     // add last partition (a bit more since we use "smaller than" below)
     partition_boundaries.push_back(massrange.back() + 1.0);
 
+
     // ------------ compute RT transformation models ------------
 
     MapAlignmentAlgorithmKD aligner(input_maps.size(), param_);
@@ -194,28 +205,28 @@ namespace OpenMS
     {
       Size progress = 0;
       startProgress(0, partition_boundaries.size(), "computing RT transformations");
-      for (size_t j = 0; j < partition_boundaries.size()-1; j++)
+
+      for (size_t j = 0; j < partition_boundaries.size()-1; ++j)
       {
         double partition_start = partition_boundaries[j];
         double partition_end = partition_boundaries[j+1];
 
-        std::vector<MapType> tmp_input_maps(input_maps.size());
-        for (size_t k = 0; k < input_maps.size(); k++)
+        std::vector<std::vector<BaseFeature*>> tmp_input_maps(input_maps.size());
+        for (size_t k = 0; k < input_maps.size(); ++k)
         {
           // iterate over all features in the current input map and append
           // matching features (within the current partition) to the temporary
           // map
-          for (size_t m = 0; m < input_maps[k].size(); m++)
+          for (size_t m = 0; m < input_maps[k].size(); ++m)
           {
             if (input_maps[k][m].getMZ() >= partition_start &&
                 input_maps[k][m].getMZ() < partition_end)
             {
-              tmp_input_maps[k].push_back(input_maps[k][m]);
+              tmp_input_maps[k].push_back(&(input_maps[k][m]));
             }
           }
-          tmp_input_maps[k].updateRanges();
         }
-
+        
         // set up kd-tree
         KDTreeFeatureMaps kd_data(tmp_input_maps, param_);
         aligner.addRTFitData(kd_data);
@@ -237,29 +248,31 @@ namespace OpenMS
     }
 
     // ------------ run alignment + feature linking on individual partitions ------------
+
     Size progress = 0;
     startProgress(0, partition_boundaries.size(), "linking features");
-    for (size_t j = 0; j < partition_boundaries.size()-1; j++)
+
+    for (size_t j = 0; j < partition_boundaries.size()-1; ++j)
     {
       double partition_start = partition_boundaries[j];
       double partition_end = partition_boundaries[j+1];
 
-      std::vector<MapType> tmp_input_maps(input_maps.size());
-      for (size_t k = 0; k < input_maps.size(); k++)
+      std::vector<std::vector<BaseFeature*>> tmp_input_maps(input_maps.size());
+      for (size_t k = 0; k < input_maps.size(); ++k)
       {
-        // iterate over all features in the current input map and append
+        // iterate over all features in the current input map and append pointer of
         // matching features (within the current partition) to the temporary
         // map
-        for (size_t m = 0; m < input_maps[k].size(); m++)
+        for (size_t m = 0; m < input_maps[k].size(); ++m)
         {
           if (input_maps[k][m].getMZ() >= partition_start &&
               input_maps[k][m].getMZ() < partition_end)
           {
-            tmp_input_maps[k].push_back(input_maps[k][m]);
+            tmp_input_maps[k].push_back(&(input_maps[k][m]));
           }
         }
-        tmp_input_maps[k].updateRanges();
       }
+
 
       // set up kd-tree
       KDTreeFeatureMaps kd_data(tmp_input_maps, param_);
@@ -272,6 +285,7 @@ namespace OpenMS
 
       // link features
       runClustering_(kd_data, out);
+      
       setProgress(progress++);
     }
     endProgress();
@@ -279,13 +293,13 @@ namespace OpenMS
     postprocess_(input_maps, out);
   }
 
-  void FeatureGroupingAlgorithmKD::group(const std::vector<FeatureMap>& maps,
+  void FeatureGroupingAlgorithmKD::group(std::vector<FeatureMap>& maps,
                                          ConsensusMap& out)
   {
     group_(maps, out);
   }
 
-  void FeatureGroupingAlgorithmKD::group(const std::vector<ConsensusMap>& maps,
+  void FeatureGroupingAlgorithmKD::group(std::vector<ConsensusMap>& maps,
                                          ConsensusMap& out)
   {
     group_(maps, out);
@@ -294,10 +308,9 @@ namespace OpenMS
   void FeatureGroupingAlgorithmKD::runClustering_(const KDTreeFeatureMaps& kd_data, ConsensusMap& out)
   {
     Size n = kd_data.size();
-
     // pass 1: initialize best potential clusters for all possible cluster centers
     set<Size> update_these;
-    for (Size i = 0; i < kd_data.size(); ++i)
+    for (Size i = 0; i < n; ++i)
     {
       update_these.insert(i);
     }
@@ -345,8 +358,6 @@ namespace OpenMS
       updateClusterProxies_(potential_clusters, cluster_for_idx, update_these, assigned, kd_data);
     }
   }
-
-
 
   void FeatureGroupingAlgorithmKD::updateClusterProxies_(set<ClusterProxyKD>& potential_clusters,
                                                          vector<ClusterProxyKD>& cluster_for_idx,
@@ -500,23 +511,47 @@ namespace OpenMS
     size_t best_quality_index = 0;
     // collect the "Group" MetaValues of Features in a ConsensusFeature MetaValue (Constant::UserParam::IIMN_LINKED_GROUPS)
     vector<String> linked_groups;
-    for (vector<Size>::const_iterator it = indices.begin(); it != indices.end(); ++it)
+    if (kd_data.getFeatureDataType() == KDTreeFeatureMaps::FEATURE_DATA_DEFAULT)
     {
-      Size i = *it;
-      cf.insert(kd_data.mapIndex(i), *(kd_data.feature(i)));
-      avg_quality += kd_data.feature(i)->getQuality();
-      if (kd_data.feature(i)->metaValueExists(Constants::UserParam::DC_CHARGE_ADDUCTS) &&
-         (kd_data.feature(i)->getQuality() > best_quality) &&
-         (kd_data.feature(i)->getCharge()))
+      for (vector<Size>::const_iterator it = indices.begin(); it != indices.end(); ++it)
       {
-       best_quality = kd_data.feature(i)->getQuality();
-       best_quality_index = i;
-      }
-      if (kd_data.feature(i)->metaValueExists(Constants::UserParam::ADDUCT_GROUP))
-      {
-        linked_groups.emplace_back(kd_data.feature(i)->getMetaValue(Constants::UserParam::ADDUCT_GROUP));
+        Size i = *it;
+        cf.insert(kd_data.mapIndex(i), *(kd_data.feature(i)));
+        avg_quality += kd_data.feature(i)->getQuality();
+        if (kd_data.feature(i)->metaValueExists(Constants::UserParam::DC_CHARGE_ADDUCTS) &&
+          (kd_data.feature(i)->getQuality() > best_quality) &&
+          (kd_data.feature(i)->getCharge()))
+        {
+        best_quality = kd_data.feature(i)->getQuality();
+        best_quality_index = i;
+        }
+        if (kd_data.feature(i)->metaValueExists(Constants::UserParam::ADDUCT_GROUP))
+        {
+          linked_groups.emplace_back(kd_data.feature(i)->getMetaValue(Constants::UserParam::ADDUCT_GROUP));
+        }
       }
     }
+    else
+    {
+      for (vector<Size>::const_iterator it = indices.begin(); it != indices.end(); ++it)
+      {
+        Size i = *it;
+        cf.insert_move(kd_data.mapIndex(i), *(kd_data.featureNonConst(i)));
+        avg_quality += kd_data.featureNonConst(i)->getQuality();
+        if (kd_data.featureNonConst(i)->metaValueExists(Constants::UserParam::DC_CHARGE_ADDUCTS) &&
+          (kd_data.featureNonConst(i)->getQuality() > best_quality) &&
+          (kd_data.featureNonConst(i)->getCharge()))
+        {
+        best_quality = kd_data.featureNonConst(i)->getQuality();
+        best_quality_index = i;
+        }
+        if (kd_data.featureNonConst(i)->metaValueExists(Constants::UserParam::ADDUCT_GROUP))
+        {
+          linked_groups.emplace_back(kd_data.featureNonConst(i)->getMetaValue(Constants::UserParam::ADDUCT_GROUP));
+        }
+      }
+    }
+
     if (kd_data.feature(best_quality_index)->metaValueExists(Constants::UserParam::DC_CHARGE_ADDUCTS))
     {
       cf.setMetaValue(Constants::UserParam::IIMN_BEST_ION, 
@@ -532,5 +567,6 @@ namespace OpenMS
     cf.computeConsensus();
     out.push_back(cf);
   }
-
 } // namespace OpenMS
+
+

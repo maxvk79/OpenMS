@@ -31,6 +31,7 @@
 // $Maintainer: Timo Sachsenberg $
 // $Authors: Marc Sturm, Clemens Groepl, Steffen Sass $
 // --------------------------------------------------------------------------
+#include <algorithm>
 
 #include <OpenMS/FORMAT/ConsensusXMLFile.h>
 #include <OpenMS/FORMAT/FeatureXMLFile.h>
@@ -184,13 +185,14 @@ protected:
         }
       }
 
-      vector<FeatureMap > maps(ins.size());
+      vector<FeatureMap> maps(ins.size());
       FeatureXMLFile f;
       FeatureFileOptions param = f.getOptions();
 
       // to save memory don't load convex hulls and subordinates
       param.setLoadSubordinates(false);
       param.setLoadConvexHull(false);
+
       f.setOptions(param);
 
       Size progress = 0;
@@ -246,10 +248,9 @@ protected:
           {
             ft.setMetaValue("Group", group);
           }
-
         }
 
-        maps[i] = tmp;
+        maps[i] = std::move(tmp);
         maps[i].updateRanges();
 
         setProgress(progress++);
@@ -269,7 +270,7 @@ protected:
       // invoke feature grouping algorithm
       
       if (frac2files.size() == 1) // group one fraction
-      {
+      {      
         algorithm->group(maps, out_map);
       }
       else // group multiple fractions
