@@ -58,11 +58,11 @@ f2.setIntensity(1000);
 f2.setMZ(500);
 f2.setRT(2000);
 
-FeatureMap fmap;
-fmap.push_back(f1);
-fmap.push_back(f2);
+vector<BaseFeature*> fmap;
+fmap.push_back(&f1);
+fmap.push_back(&f2);
 
-vector<FeatureMap> fmaps;
+vector<vector<BaseFeature*>> fmaps;
 fmaps.push_back(fmap);
 
 vector<BaseFeature*> fmap2;
@@ -96,20 +96,8 @@ START_SECTION((virtual ~KDTreeFeatureMaps()))
   delete ptr;
 END_SECTION
 
-START_SECTION((KDTreeFeatureMaps(std::vector<MapType>& maps, const Param& param)))
-  ptr = new KDTreeFeatureMaps(fmaps, p);
-  TEST_NOT_EQUAL(ptr, nullPointer);
-  delete ptr;
-END_SECTION
-
 START_SECTION((KDTreeFeatureMaps(std::vector<std::vector<BaseFeature*>>& maps, const Param& param)))
   ptr = new KDTreeFeatureMaps(fmaps2, p);
-  TEST_NOT_EQUAL(ptr, nullPointer);
-  delete ptr;
-END_SECTION
-
-START_SECTION((KDTreeFeatureMaps(std::vector<std::vector<const BaseFeature*>>& maps, const Param& param)))
-  ptr = new KDTreeFeatureMaps(fmaps3, p);
   TEST_NOT_EQUAL(ptr, nullPointer);
   delete ptr;
 END_SECTION
@@ -136,23 +124,22 @@ END_SECTION
 KDTreeFeatureMaps kd_data_3;
 KDTreeFeatureMaps kd_data_4(fmaps2, p);
 
-START_SECTION((void addMaps(const std::vector<MapType>& maps)))
+START_SECTION((void addMaps(std::vector<std::vector<BaseFeature*>>& maps)))
   kd_data_3.addMaps(fmaps);
   TEST_EQUAL(kd_data_3.size(), 2);
-  TEST_EXCEPTION(Exception::InternalToolError,kd_data_4.addMaps(fmaps))
 END_SECTION
 
-START_SECTION((BaseFeature* featureNonConst(Size i) const))
+START_SECTION((void addFeature(Size mt_map_index, BaseFeature* feature)))
+  Feature f3;
+  f3.setMZ(300);
+  f3.setRT(500);
+  kd_data_3.addFeature(2, &f3);
+  TEST_EQUAL(kd_data_3.size(), 3);
+END_SECTION
+
+START_SECTION((BaseFeature* feature(Size i) const))
   TEST_EQUAL(kd_data_4.feature(0), fmaps2[0][0])
   TEST_EQUAL(kd_data_4.feature(1), fmaps2[0][1])
-  TEST_EQUAL(kd_data_4.featureNonConst(0), fmaps2[0][0])
-  TEST_EQUAL(kd_data_4.featureNonConst(1), fmaps2[0][1])
-  TEST_EXCEPTION(Exception::ElementNotFound,kd_data_1.featureNonConst(0))
-END_SECTION
-
-START_SECTION((const BaseFeature* feature(Size i) const))
-  TEST_EQUAL(kd_data_1.feature(0), &(fmaps[0][0]))
-  TEST_EQUAL(kd_data_1.feature(1), &(fmaps[0][1]))
 END_SECTION
 
 START_SECTION((double rt(Size i) const))
@@ -177,12 +164,12 @@ END_SECTION
 
 START_SECTION((Size size() const))
   TEST_EQUAL(kd_data_1.size(), 2)
-  TEST_EQUAL(kd_data_3.size(), 2)
+  TEST_EQUAL(kd_data_3.size(), 3)
 END_SECTION
 
 START_SECTION((Size treeSize() const))
   TEST_EQUAL(kd_data_1.treeSize(), 2)
-  TEST_EQUAL(kd_data_3.treeSize(), 2)
+  TEST_EQUAL(kd_data_3.treeSize(), 3)
 END_SECTION
 
 START_SECTION((Size numMaps() const))
@@ -209,13 +196,6 @@ END_SECTION
 
 START_SECTION((void applyTransformations(const std::vector<TransformationModelLowess*>& trafos)))
   NOT_TESTABLE;
-END_SECTION
-
-START_SECTION(FeatureDataType getFeatureDataType() const)
-    KDTreeFeatureMaps::FeatureDataType fdt_def = KDTreeFeatureMaps::FeatureDataType::FEATURE_DATA_DEFAULT; 
-    KDTreeFeatureMaps::FeatureDataType fdt_nc = KDTreeFeatureMaps::FeatureDataType::FEATURE_DATA_NON_CONST; 
-    TEST_EQUAL(kd_data_1.getFeatureDataType(), fdt_def)
-    TEST_EQUAL(kd_data_4.getFeatureDataType(), fdt_nc)
 END_SECTION
 
 delete ptr;

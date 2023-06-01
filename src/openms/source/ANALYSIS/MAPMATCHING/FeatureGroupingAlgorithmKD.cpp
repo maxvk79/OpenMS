@@ -511,47 +511,25 @@ namespace OpenMS
     size_t best_quality_index = 0;
     // collect the "Group" MetaValues of Features in a ConsensusFeature MetaValue (Constant::UserParam::IIMN_LINKED_GROUPS)
     vector<String> linked_groups;
-    if (kd_data.getFeatureDataType() == KDTreeFeatureMaps::FEATURE_DATA_DEFAULT)
-    {
-      for (vector<Size>::const_iterator it = indices.begin(); it != indices.end(); ++it)
-      {
-        Size i = *it;
-        cf.insert(kd_data.mapIndex(i), *(kd_data.feature(i)));
-        avg_quality += kd_data.feature(i)->getQuality();
-        if (kd_data.feature(i)->metaValueExists(Constants::UserParam::DC_CHARGE_ADDUCTS) &&
-          (kd_data.feature(i)->getQuality() > best_quality) &&
-          (kd_data.feature(i)->getCharge()))
-        {
-        best_quality = kd_data.feature(i)->getQuality();
-        best_quality_index = i;
-        }
-        if (kd_data.feature(i)->metaValueExists(Constants::UserParam::ADDUCT_GROUP))
-        {
-          linked_groups.emplace_back(kd_data.feature(i)->getMetaValue(Constants::UserParam::ADDUCT_GROUP));
-        }
-      }
-    }
-    else
-    {
-      for (vector<Size>::const_iterator it = indices.begin(); it != indices.end(); ++it)
-      {
-        Size i = *it;
-        cf.insert_move(kd_data.mapIndex(i), *(kd_data.featureNonConst(i)));
-        avg_quality += kd_data.featureNonConst(i)->getQuality();
-        if (kd_data.featureNonConst(i)->metaValueExists(Constants::UserParam::DC_CHARGE_ADDUCTS) &&
-          (kd_data.featureNonConst(i)->getQuality() > best_quality) &&
-          (kd_data.featureNonConst(i)->getCharge()))
-        {
-        best_quality = kd_data.featureNonConst(i)->getQuality();
-        best_quality_index = i;
-        }
-        if (kd_data.featureNonConst(i)->metaValueExists(Constants::UserParam::ADDUCT_GROUP))
-        {
-          linked_groups.emplace_back(kd_data.featureNonConst(i)->getMetaValue(Constants::UserParam::ADDUCT_GROUP));
-        }
-      }
-    }
 
+    for (vector<Size>::const_iterator it = indices.begin(); it != indices.end(); ++it)
+    {
+      Size i = *it;
+      cf.insert_move(kd_data.mapIndex(i), *(kd_data.feature(i)));
+      avg_quality += kd_data.feature(i)->getQuality();
+      if (kd_data.feature(i)->metaValueExists(Constants::UserParam::DC_CHARGE_ADDUCTS) &&
+        (kd_data.feature(i)->getQuality() > best_quality) &&
+        (kd_data.feature(i)->getCharge()))
+      {
+      best_quality = kd_data.feature(i)->getQuality();
+      best_quality_index = i;
+      }
+      if (kd_data.feature(i)->metaValueExists(Constants::UserParam::ADDUCT_GROUP))
+      {
+        linked_groups.emplace_back(kd_data.feature(i)->getMetaValue(Constants::UserParam::ADDUCT_GROUP));
+      }
+    }
+    
     if (kd_data.feature(best_quality_index)->metaValueExists(Constants::UserParam::DC_CHARGE_ADDUCTS))
     {
       cf.setMetaValue(Constants::UserParam::IIMN_BEST_ION, 
